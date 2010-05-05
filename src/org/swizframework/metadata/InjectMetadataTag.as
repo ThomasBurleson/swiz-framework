@@ -51,7 +51,7 @@ package org.swizframework.metadata
 		/**
 		 * Backing variable for read-only <code>bind</code> property.
 		 */
-		protected var _bind:Boolean = false;
+		protected var _bind:Boolean = true;
 		
 		/**
 		 * Backing variable for read-only <code>required</code> property.
@@ -102,7 +102,7 @@ package org.swizframework.metadata
 		 * Returns bind attribute of [Inject] tag as a <code>Boolean</code> value.
 		 * If true will cause a binding to be established.
 		 *
-		 * @default false
+		 * @default trues
 		 */
 		public function get bind():Boolean
 		{

@@ -16,7 +16,8 @@
 
 package org.swizframework.utils.services {
 	import mx.rpc.AsyncToken;
-
+	import mx.rpc.IResponder;
+	
 	import org.swizframework.core.ISwiz;
 	import org.swizframework.core.ISwizAware;
 
@@ -42,6 +43,14 @@ package org.swizframework.utils.services {
 				faultHandler = swiz.config.defaultFaultHandler;
 
 			call.addResponder( new SwizResponder( resultHandler, faultHandler, resultHandlerArgs ));
+		}
+		
+		public function addResponder(call:AsyncToken, responders:IResponder, args:Array=null):void {
+			executeServiceCall(call, responders.result,responders.fault,args);
+		}
+		
+		public function addHandlers(call : AsyncToken, resultHandler : Function, faultHandler : Function = null, resultHandlerArgs : Array = null ) : void {
+			executeServiceCall(call, resultHandler,faultHandler,resultHandlerArgs);
 		}
 	}
 }

@@ -35,16 +35,21 @@ package org.swizframework.utils.chain
 		}
 		
 		/** Constructs a dynamic command */
-		public function createCommand( delayedCall:Function, args:Array, resultHandler:Function,
+		static public function createChain( mode:String = ChainType.SEQUENCE ):CommandChain
+		{
+			return new CommandChain( mode );
+		}
+
+		/** Constructs a dynamic command */
+		static public function createAsyncCommand( delayedCall:Function, args:Array, resultHandler:Function,
 									   faultHandler:Function = null, resultHandlerArgs:Array = null ):AsyncCommandChainStep
 		{
 			return new AsyncCommandChainStep( delayedCall, args, resultHandler, faultHandler, resultHandlerArgs );
 		}
 		
-		/** Constructs a dynamic command */
-		public function createChain( mode:String = ChainType.SEQUENCE ):CommandChain
-		{
-			return new CommandChain( mode );
-		}
+		
+		static public function createFunction(method:Function, funcArgs:Array = null, funcScope:* = null):FunctionChainStep {
+			return new FunctionChainStep(method,funcArgs,funcScope);
+		} 
 	}
 }
