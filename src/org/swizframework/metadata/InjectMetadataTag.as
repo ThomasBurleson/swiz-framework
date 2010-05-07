@@ -102,7 +102,7 @@ package org.swizframework.metadata
 		 * Returns bind attribute of [Inject] tag as a <code>Boolean</code> value.
 		 * If true will cause a binding to be established.
 		 *
-		 * @default trues
+		 * @default true
 		 */
 		public function get bind():Boolean
 		{

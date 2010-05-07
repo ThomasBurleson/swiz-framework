@@ -45,12 +45,14 @@ package org.swizframework.utils.services {
 			call.addResponder( new SwizResponder( resultHandler, faultHandler, resultHandlerArgs ));
 		}
 		
-		public function addResponder(call:AsyncToken, responders:IResponder, args:Array=null):void {
+		public function addResponder(call:AsyncToken, responders:IResponder, args:Array=null):AsyncToken {
 			executeServiceCall(call, responders.result,responders.fault,args);
+			return call;
 		}
 		
-		public function addHandlers(call : AsyncToken, resultHandler : Function, faultHandler : Function = null, resultHandlerArgs : Array = null ) : void {
+		public function addHandlers(call : AsyncToken, resultHandler : Function, faultHandler : Function = null, resultHandlerArgs : Array = null ) : AsyncToken {
 			executeServiceCall(call, resultHandler,faultHandler,resultHandlerArgs);
+			return call;
 		}
 	}
 }

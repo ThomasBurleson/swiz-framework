@@ -25,6 +25,7 @@ package org.swizframework.core
 	
 	import org.swizframework.events.SwizEvent;
 	import org.swizframework.processors.DispatcherProcessor;
+	import org.swizframework.processors.LogProcessor;
 	import org.swizframework.processors.IProcessor;
 	import org.swizframework.processors.InjectProcessor;
 	import org.swizframework.processors.MediateProcessor;
@@ -56,7 +57,7 @@ package org.swizframework.core
 		protected var _beanFactory:IBeanFactory;
 		protected var _beanProviders:Array;
 		protected var _loggingTargets:Array;
-		protected var _processors:Array = [ new InjectProcessor(), new DispatcherProcessor(), new MediateProcessor(), 
+		protected var _processors:Array = [ new InjectProcessor(), new DispatcherProcessor(), new MediateProcessor(), new LogProcessor(),  
 											new SwizInterfaceProcessor(), new PostConstructProcessor(), new PreDestroyProcessor() ];
 		
 		protected var _parentSwiz:ISwiz;
