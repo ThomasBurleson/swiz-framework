@@ -1,6 +1,7 @@
 package org.swizframework.processors
 {
 	import flash.utils.getDefinitionByName;
+	import flash.utils.getQualifiedClassName;
 	
 	import mx.logging.ILogger;
 	import mx.logging.ILoggingTarget;
@@ -115,9 +116,12 @@ package org.swizframework.processors
 			super.setUpMetadataTags( metadataTags, bean );
 			
 			for each (var metadataTag:IMetadataTag in metadataTags) {
-				// Setting Logger
+				
+				// Setting filters and Logger instance for this bean.source class
+				autotAddLogFilter(bean.source);
 				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(bean.source);
-				logger.debug( "LogProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() );
+				
+				logger.debug( "LogProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() ); 
 			}
 		}
 		
@@ -147,10 +151,53 @@ package org.swizframework.processors
 				target.includeLevel 	= settings.includeLevel;
 				
 				logTarget = target;
+				settings.loggingTarget  = target;
 			}
 			
 			SwizLogger.addLoggingTarget(logTarget);
 		}
+		
+		/**
+		 * Each [Log] target will have its package path auto-added as an "allowed" filter.
+		 * Use the fully-qualified classname to get its package path.
+		 *  
+		 * @param target Class instance with a [Log] metadata tag inserted.
+		 * 
+		 */
+		private function autotAddLogFilter(target:Object):void {
+			var logTarget : TraceTarget = settings.loggingTarget as TraceTarget;
+			if (logTarget != null) {
+				logTarget.filters ||= [];
+				
+				var clazzName   : String  = getQualifiedClassName( target );
+				var packages    : String  = clazzName.substr(0,clazzName.indexOf(":")) + ".*";
+				
+					// Append new package to existing list of filters
+					logTarget.filters = addToFilters(packages, logTarget.filters);
+			}
+		}
+		
+		private function addToFilters(category:String, filters:Array):Array {
+			var results : Array   = [];
+			var len     : int 	  = category.indexOf( "*" ) - 1;
+			var found   : Boolean = false;
+			
+			for each (var it:String in filters) {
+				// Remove default wildcard "match all" filter 
+				if (it == "*") continue;
+				
+				if (category.substring(0, len) != it.substring(0, len)) {
+					results.push(it);  // existing filter item to keep
+				} else found ||= true;
+			}
+			
+			// New category filter was not in list... so add it!
+			if (found != true) results.push(category);
+			
+			return results;
+		}
+		
+		
 		
 		static	protected  const 	LOG			:String 	 	= "Log";
 		
