@@ -18,7 +18,8 @@ package org.swizframework.processors
 	 * This Metadata Tag processor supports the [Log] tag to inject a logger reference.
 	 * The power of this processor is that when it attaches/injects a logger reference into a target class
 	 * it also creates a custom logger for that same class. The logger is auto-configured to prepend 
-	 * Class B's name in the log message. 
+	 * Class B's name in the log message. It may also auto-add the target class's package path as a filter to its
+	 * custom internal log target.
 	 * 
 	 * For example consider the target class BeadTester below:
 	 * 
@@ -28,28 +29,38 @@ package org.swizframework.processors
 	 *   	public var log  : ILogger = null;
 	 * 
 	 *   	public function startTest(testID:String):void {
-	 *     		log.debug("startTest() testID =#"+testID);
+	 *     		log.debug("startTest(); testID=#"+testID);
 	 *   	}
 	 *    }
 	 *
 	 *  and the LogProcessor registered with the Swiz instance using: 
 	 * 
 	 * 		<swiz:customProcessors>
+	 * 			<!-- Let's use the default internal logger, 
+	 *               with auto-filters, auto-categories, LogEventLevel.ALL 
+	 * 			-->
+	 *			<swiz:LogProcessor />
+	 *		</swiz:customProcessors>
+	 * 
+	 *   or use with custom <ILoggingTarget> TraceTarget instance 
+	 *  
+	 * 		<swiz:customProcessors>
 	 *			<swiz:LogProcessor>
 	 *				<swiz:loggingTarget>
-	 *					<mx:TraceTarget fieldSeparator=">> "
+	 *					<mx:TraceTarget fieldSeparator="  "
 	 *							filters="{['org.test.services.*']}"
 	 *							includeCategory="true"
 	 *							includeTime="true"
-	 *							includeLevel="true"
+	 *							includeLevel="false"
 	 *							level="{LogEventLevel.DEBUG }" />
 	 *				</swiz:loggingTarget>
 	 *			</swiz:LogProcessor>
 	 *		</swiz:customProcessors>
-	 *   
-	 *  With the above settings, a call to an instance <BeadTester>.startTest(4) would yield output of:
 	 * 
-	 *        10:17:04.233>> [DEBUG]>> org.test.services::BeadTester>> startTest() testID =#4  
+	 * 
+ 	 *  With the above settings, a call to an instance <BeadTester>.startTest(4) would yield output of:
+	 * 
+	 *        10:17:04.233  org.test.services::BeadTester  startTest(); testID=#4  
 	 *
 	 * 
 	 * @author thomasburleson
@@ -104,7 +115,7 @@ package org.swizframework.processors
 			super.init(swiz);
 			
 			// Allow custom override of category ID (which is used with filters
-			addLogTarget();
+			addLogTarget();			
 		}
 		
 		
@@ -180,6 +191,16 @@ package org.swizframework.processors
 			}
 		}
 		
+		/**
+		 * Method supports auto-Filters to automatically add the bean.source package path 
+		 * as another filter; to allow valid log output with our custom logger.
+		 *  
+		 * @param category String value is the package of the bean.source class
+		 * @param filters Array of existing filters
+		 * 
+		 * @return Array modified/updated filter set 
+		 * 
+		 */
 		private function addToFilters(category:String, filters:Array):Array {
 			var results : Array   = [];
 			var len     : int 	  = category.indexOf( "*" ) - 1;
@@ -201,6 +222,11 @@ package org.swizframework.processors
 			return results;
 		}
 		
+		/**
+		 * On-demand access to the ILogger for LogProcessor class  
+		 * @return 
+		 * 
+		 */
 		protected function get logger():ILogger {
 			return SwizLogger.getLogger(this);
 		}
