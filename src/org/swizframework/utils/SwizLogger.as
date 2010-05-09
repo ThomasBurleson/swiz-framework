@@ -27,14 +27,15 @@ package org.swizframework.utils
 	
 	public class SwizLogger extends EventDispatcher implements ILogger
 	{
-		protected static var loggers:Dictionary;
-		protected static var loggingTargets:Array;
+		protected static var loggers		:Dictionary = new Dictionary();
+		protected static var loggingTargets	:Array		= [];
 		
 		public static function getLogger( target:Object ):ILogger
 		{
 			loggers ||= new Dictionary();
 			
-			var className:String = getQualifiedClassName( target );
+			// Target is a class or instance; we want the fully-qualified Classname
+			var className:String  = getQualifiedClassName( target );
 			var logger:SwizLogger = loggers[ className ];
 			
 			// if the logger doesn't already exist, create and store it
@@ -45,13 +46,10 @@ package org.swizframework.utils
 			}
 			
 			// check for existing targets interested in this logger
-			if( loggingTargets != null )
-			{
-				for each( var logTarget:ILoggingTarget in loggingTargets )
-				{
-					if( categoryMatchInFilterList( logger.category, logTarget.filters ) )
-						logTarget.addLogger( logger );
-				}
+			for each( var logTarget:ILoggingTarget in loggingTargets ) {
+				
+				if( categoryMatchInFilterList( logger.category, logTarget.filters ) )
+					logTarget.addLogger( logger );
 			}
 			
 			return logger;

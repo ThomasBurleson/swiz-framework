@@ -57,7 +57,7 @@ package org.swizframework.core
 		protected var _beanFactory:IBeanFactory;
 		protected var _beanProviders:Array;
 		protected var _loggingTargets:Array;
-		protected var _processors:Array = [ new InjectProcessor(), new DispatcherProcessor(), new MediateProcessor(), new LogProcessor(),  
+		protected var _processors:Array = [ new InjectProcessor(), new DispatcherProcessor(), new MediateProcessor(), 
 											new SwizInterfaceProcessor(), new PostConstructProcessor(), new PreDestroyProcessor() ];
 		
 		protected var _parentSwiz:ISwiz;

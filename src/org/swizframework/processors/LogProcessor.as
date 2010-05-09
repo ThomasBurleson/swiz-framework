@@ -3,6 +3,7 @@ package org.swizframework.processors
 	import flash.utils.getDefinitionByName;
 	
 	import mx.logging.ILogger;
+	import mx.logging.ILoggingTarget;
 	import mx.logging.LogEventLevel;
 	import mx.logging.targets.TraceTarget;
 	
@@ -12,17 +13,73 @@ package org.swizframework.processors
 	import org.swizframework.reflection.IMetadataTag;
 	import org.swizframework.utils.SwizLogger;
 	
+	/**
+	 * This Metadata Tag processor supports the [Log] tag to inject a logger reference.
+	 * The power of this processor is that when it attaches/injects a logger reference into a target class
+	 * it also creates a custom logger for that same class. The logger is auto-configured to prepend 
+	 * Class B's name in the log message. 
+	 * 
+	 * For example consider the target class BeadTester below:
+	 * 
+	 * 	 class org.test.services.BeadTester {
+	 * 
+	 *  	[Log]
+	 *   	public var log  : ILogger = null;
+	 * 
+	 *   	public function startTest(testID:String):void {
+	 *     		log.debug("startTest() testID =#"+testID);
+	 *   	}
+	 *    }
+	 *
+	 *  and the LogProcessor registered with the Swiz instance using: 
+	 * 
+	 * 		<swiz:customProcessors>
+	 *			<swiz:LogProcessor>
+	 *				<swiz:loggingTarget>
+	 *					<mx:TraceTarget fieldSeparator=">> "
+	 *							filters="{['org.test.services.*']}"
+	 *							includeCategory="true"
+	 *							includeTime="true"
+	 *							includeLevel="true"
+	 *							level="{LogEventLevel.DEBUG }" />
+	 *				</swiz:loggingTarget>
+	 *			</swiz:LogProcessor>
+	 *		</swiz:customProcessors>
+	 *   
+	 *  With the above settings, a call to an instance <BeadTester>.startTest(4) would yield output of:
+	 * 
+	 *        10:17:04.233>> [DEBUG]>> org.test.services::BeadTester>> startTest() testID =#4  
+	 *
+	 * 
+	 * @author thomasburleson
+	 * @date   May, 2010
+	 * 
+	 */
 	public class LogProcessor extends BaseMetadataProcessor
 	{
-		public function set level(value:int)			  :void	{	if (tracer != null) tracer.level = value;			}
-		public function set filters(value:Array)		  :void {	if (tracer != null) tracer.filters = value;			}
-		public function set includeDate(value:Boolean)	  :void {	if (tracer != null) tracer.includeDate = value;		}
-		public function set includeTime(value:Boolean)	  :void	{	if (tracer != null) tracer.includeTime = value;		}
-		public function set includeCategory(value:Boolean):void	{	if (tracer != null) tracer.includeCategory = value;	}
-		public function set includeLevel(value:Boolean)	  :void	{	if (tracer != null) tracer.includeLevel = value;	}
+		public function set loggingTarget(val:ILoggingTarget):void 	{   settings.loggingTarget = val;	}
+		public function set level(value:int)			  	:void	{	settings.level = value;			}
+		public function set filters(value:Array)		  	:void 	{	settings.filters = value;			}
+		public function set includeDate(value:Boolean)	  	:void 	{	settings.includeDate = value;		}
+		public function set includeTime(value:Boolean)	  	:void	{	settings.includeTime = value;		}
+		public function set includeCategory(value:Boolean)	:void	{	settings.includeCategory = value;	}
+		public function set includeLevel(value:Boolean)	  	:void	{	settings.includeLevel = value;	}
 		
-		public function LogProcessor(level			:int = LogEventLevel.ALL, 
-									 filters		:Array = null, 
+		/**
+		 * Constructor to support programmatic instantiation
+		 *  
+		 * @param loggingTarget ILoggingTarget instance; defaults to null. If not null, then all other parameters are ignored.
+		 * @param level			LogEventLevel; defaults to ALL
+		 * @param filters		String[] specifies which packages are filtered (allowed).
+		 * @param includeDate	Boolean indicates if Log date is included in the log output
+		 * @param includeTime	Boolean indicates if Log time is included in the log output
+		 * @param includeCategory	Boolean indicates if target className is included in the log output
+		 * @param includeLevel	Boolean indicates if LogLevel is included in the log output
+		 * 
+		 */
+		public function LogProcessor(loggingTarget  :ILoggingTarget = null,
+									 level			:int 	 = LogEventLevel.ALL, 
+									 filters		:Array 	 = null, 
 									 includeDate	:Boolean = true, 
 									 includeTime	:Boolean = true, 
 									 includeCategory:Boolean = true, 
@@ -30,37 +87,36 @@ package org.swizframework.processors
 			super([LOG]);
 			
 			// Defer creation of shared target until Swiz is ready and calls init()
-			_initCache = { 	level			:level,
-							filters			:filters,
-							includeDate		:includeDate, 
-							includeTime		:includeTime, 
-							includeCategory :includeCategory, 
-							includeLevel	:includeLevel };
-		}
-		
-		
-		override public function init( swiz:ISwiz ):void {
-			super.init(swiz);
-			initTracer();
-			logger = SwizLogger.getLogger( this );
+			settings = new CachedSettings(	loggingTarget,level,filters,
+											includeDate,includeTime,includeCategory,includeLevel);
 		}
 		
 		
 		/**
-		 * Assign ILogger instance
+		 * Init method to configure the processor and build default 
+		 * LoggerTarget if not provided
+		 *  
+		 * @param swiz Swiz needed to access bean factory
+		 * 
+		 */
+		override public function init( swiz:ISwiz ):void {
+			super.init(swiz);
+			
+			// Allow custom override of category ID (which is used with filters
+			addLogTarget();
+			logger = SwizLogger.getLogger(this);
+		}
+		
+		
+		/**
+		 * Assign ILogger instance; each assigned/customized for the targeted bean class
 		 */
 		override public function setUpMetadataTags( metadataTags:Array, bean:Bean ):void{
 			super.setUpMetadataTags( metadataTags, bean );
 			
-			// bean.typeDescriptor.className returns class name in packages::ClassName notation
-			// that is not accepted by Log.getLogger function, returning only ClassName string 
-			
-			var className:String = bean.typeDescriptor.className;
-			className = className.substr(className.lastIndexOf(":") + 1);
-			
 			for each (var metadataTag:IMetadataTag in metadataTags) {
 				// Setting Logger
-				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(className);
+				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(bean.source);
 				logger.debug( "LogProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() );
 			}
 		}
@@ -73,35 +129,78 @@ package org.swizframework.processors
 			logger.debug( "InjectProcessor tear down {0} on {1}", metadataTag.toString(), bean.toString() );
 		}
 		
-		private function initTracer() : void {
+		/**
+		 * Build a default LoggingTarget if not specified in the LogProcessor instantiation. 
+		 * 
+		 */
+		private function addLogTarget() : void {
+			// Build one and register with Swiz and shared
+			var logTarget : ILoggingTarget = settings.loggingTarget as ILoggingTarget;
+			if (logTarget == null) {
+				var target : TraceTarget = new TraceTarget();
+				
+				target.level 			= settings.level;
+				target.filters			= settings.filters;
+				target.includeDate 		= settings.includeDate;
+				target.includeTime 		= settings.includeTime;
+				target.includeCategory 	= settings.includeCategory;
+				target.includeLevel 	= settings.includeLevel;
+				
+				logTarget = target;
+			}
 			
-			// If shared is not available...
-			if (LogProcessor.traceTarget == null)
-			{
-				// Build one and register with Swiz and shared
-				var tracer : TraceTarget = new TraceTarget();
-				
-				tracer.level 			= _initCache.level;
-				tracer.filters			= _initCache.filters;
-				tracer.includeDate 		= _initCache.includeDate;
-				tracer.includeTime 		= _initCache.includeTime;
-				tracer.includeCategory 	= _initCache.includeCategory;
-				tracer.includeLevel 	= _initCache.includeLevel;
-				
-				LogProcessor.traceTarget = tracer;
-				SwizLogger.addLoggingTarget(tracer);
-			} 			
+			SwizLogger.addLoggingTarget(logTarget);
 		}
 		
-		private function get tracer():TraceTarget {
-			return LogProcessor.traceTarget;
-		}
+		static	protected  const 	LOG			:String 	 	= "Log";
+		
+				protected  var 		logger		:ILogger 		= null;
+				protected  var      settings 	:CachedSettings = null;
+	}
+}
 
-				private    var      _initCache 	:Object      = null;
-				
-		static	protected  const 	LOG			:String 	 = "Log";
-		static 	protected  var 		traceTarget	:TraceTarget = null;
+
+
+import flash.utils.getQualifiedClassName;
+
+import mx.logging.ILoggingTarget;
+import mx.logging.LogEventLevel;
+import mx.utils.StringUtil;
+
+/**
+ * Helper class used to cache all initialization settings associated with LoggingTarget
+ *  
+ * @author thomasburleson
+ * 
+ */
+class CachedSettings {
+
+	public var loggingTarget    : ILoggingTarget 	= null;
+	
+	public var level 			: int 				= LogEventLevel.ALL;
+	public var filters			: Array  			= [];
+	
+	public var includeDate  	: Boolean			= true;
+	public var includeTime  	: Boolean			= true;
+	public var includeCategory	: Boolean			= true;
+	public var includeLevel		: Boolean			= true;
+	
+	public function CachedSettings (loggingTarget	:ILoggingTarget = null,
+									level			:int 	 = LogEventLevel.ALL, 
+									filters			:Array   = null, 
+									includeDate		:Boolean = true, 
+									includeTime		:Boolean = true, 
+									includeCategory	:Boolean = false, 
+									includeLevel	:Boolean = true) {
+	
+		this.loggingTarget      = loggingTarget;
 		
-				protected  var 		logger		:ILogger 	= null;
+		this.level				= level;
+		this.filters			= filters;
+		
+		this.includeDate		= includeDate; 
+		this.includeTime		= includeTime; 
+		this.includeCategory 	= includeCategory; 
+		this.includeLevel		= includeLevel;
 	}
 }

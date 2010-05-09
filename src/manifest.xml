@@ -24,4 +24,6 @@
 	<component class="org.swizframework.utils.services.MockDelegateHelper" />
 	<component class="org.swizframework.utils.services.URLRequestHelper" />
 	
+	<component class="org.swizframework.processors.LogProcessor" />
+	
 </componentPackage>
