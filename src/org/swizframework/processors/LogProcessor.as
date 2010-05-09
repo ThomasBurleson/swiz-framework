@@ -105,7 +105,6 @@ package org.swizframework.processors
 			
 			// Allow custom override of category ID (which is used with filters
 			addLogTarget();
-			logger = SwizLogger.getLogger(this);
 		}
 		
 		
@@ -138,13 +137,17 @@ package org.swizframework.processors
 		 * 
 		 */
 		private function addLogTarget() : void {
+			if (!settings.filters || settings.filters.length==0) {
+				settings.filters = [DUMMY_FILTER]; 
+			} 
+
 			// Build one and register with Swiz and shared
 			var logTarget : ILoggingTarget = settings.loggingTarget as ILoggingTarget;
 			if (logTarget == null) {
 				var target : TraceTarget = new TraceTarget();
 				
-				target.level 			= settings.level;
 				target.filters			= settings.filters;
+				target.level 			= settings.level;
 				target.includeDate 		= settings.includeDate;
 				target.includeTime 		= settings.includeTime;
 				target.includeCategory 	= settings.includeCategory;
@@ -184,7 +187,8 @@ package org.swizframework.processors
 			
 			for each (var it:String in filters) {
 				// Remove default wildcard "match all" filter 
-				if (it == "*") continue;
+				if (it == "*") 			continue;
+				if (it == DUMMY_FILTER) continue;
 				
 				if (category.substring(0, len) != it.substring(0, len)) {
 					results.push(it);  // existing filter item to keep
@@ -197,11 +201,14 @@ package org.swizframework.processors
 			return results;
 		}
 		
+		protected function get logger():ILogger {
+			return SwizLogger.getLogger(this);
+		}
 		
 		
 		static	protected  const 	LOG			:String 	 	= "Log";
+		static  protected  const    DUMMY_FILTER:String         = "dummy.remove.asap.*";
 		
-				protected  var 		logger		:ILogger 		= null;
 				protected  var      settings 	:CachedSettings = null;
 	}
 }
