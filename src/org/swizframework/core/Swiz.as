@@ -279,9 +279,6 @@ package org.swizframework.core
 				beanFactory = new BeanFactory();
 			}
 			
-			// dispatch a swiz created event before fully initializing
-			dispatchSwizCreatedEvent();
-			
 			if( parentSwiz != null )
 			{
 				_beanFactory.parentBeanFactory = _parentSwiz.beanFactory;
@@ -316,6 +313,9 @@ package org.swizframework.core
 			beanFactory.setUpBeans();
 			
 			logger.info( "Swiz initialized" );
+			
+			// dispatch a swiz created event before fully initializing
+			dispatchSwizCreatedEvent();
 		}
 		
 		/**
