@@ -25,6 +25,8 @@
 	<component class="org.swizframework.utils.services.MockDelegateHelper" />
 	<component class="org.swizframework.utils.services.URLRequestHelper" />
 	
-	<component class="org.swizframework.processors.LogProcessor" />
+	<!-- Custom Processors -->
+	<component class="org.swizframework.processors.custom.LogProcessor" />
+	<component class="org.swizframework.processors.custom.DeepLinkProcessor" />
 	
 </componentPackage>

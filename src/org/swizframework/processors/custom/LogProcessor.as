@@ -1,4 +1,4 @@
-package org.swizframework.processors
+package org.swizframework.processors.custom
 {
 	import flash.utils.getDefinitionByName;
 	import flash.utils.getQualifiedClassName;
@@ -126,12 +126,15 @@ package org.swizframework.processors
 			super.setUpMetadataTags( metadataTags, bean );
 			
 			for each (var metadataTag:IMetadataTag in metadataTags) {
+				var classInstance : Object = bean.source;
 				
-				// Setting filters and Logger instance for this bean.source class
-				autotAddLogFilter(bean.source);
-				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(bean.source);
+				// (1) Auto-add the target class package as Filter
+				// (2) Now inject the custom logger instance into the target class property
 				
-				logger.debug( "LogProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() ); 
+				autoAddLogFilter(classInstance);
+				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(classInstance);
+				
+				logger.debug( "LogProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() );
 			}
 		}
 		
@@ -178,7 +181,7 @@ package org.swizframework.processors
 		 * @param target Class instance with a [Log] metadata tag inserted.
 		 * 
 		 */
-		private function autotAddLogFilter(target:Object):void {
+		private function autoAddLogFilter(target:Object):void {
 			var logTarget : TraceTarget = settings.loggingTarget as TraceTarget;
 			if (logTarget != null) {
 				logTarget.filters ||= [];

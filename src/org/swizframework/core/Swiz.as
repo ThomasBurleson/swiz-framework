@@ -25,7 +25,7 @@ package org.swizframework.core
 	
 	import org.swizframework.events.SwizEvent;
 	import org.swizframework.processors.DispatcherProcessor;
-	import org.swizframework.processors.LogProcessor;
+	import org.swizframework.processors.custom.LogProcessor;
 	import org.swizframework.processors.IProcessor;
 	import org.swizframework.processors.InjectProcessor;
 	import org.swizframework.processors.MediateProcessor;
