@@ -28,9 +28,11 @@ package org.swizframework.processors.custom
 		// ========================================
 		
 		/**
-		 * Reference to the Flex SDK BrowserManager singleton
+		 * Reference to the an IBrowserManager instance.
+		 * 
+		 * @defaultValue Singleton instance for the Flex SDK BrowserManager
 		 */
-		protected var browserManager:IBrowserManager;
+		public var browserManager:IBrowserManager;
 		
 		/**
 		 * List of mediate event types
@@ -73,12 +75,15 @@ package org.swizframework.processors.custom
 		 */
 		override public function init( swiz:ISwiz ):void
 		{
-			// initialize the browser manager
-			browserManager = BrowserManager.getInstance();
-			browserManager.addEventListener( BrowserChangeEvent.BROWSER_URL_CHANGE, browserUrlChangeHandler );
-			browserManager.init();
-			
 			super.init( swiz );
+			
+			if (browserManager == null) {
+				// Defaults to internal reference to Flex SDK BrowserManager
+				browserManager = BrowserManager.getInstance();
+				browserManager.addEventListener( BrowserChangeEvent.BROWSER_URL_CHANGE, onBrowserURLChange );
+			}
+			
+			browserManager.init();
 		}
 		
 		/**
@@ -101,6 +106,26 @@ package org.swizframework.processors.custom
 			var method:Function = bean.source[ metadataTag.host.name ] as Function;
 			
 			removeURLMapping( deepLink, method );
+		}
+		
+		/**
+		 * Executed when the browser URL changes
+		 */
+		public function onBrowserURLChange( event:Event ):void {
+			var url:String = event.hasOwnProperty("url") ? event["url"] : "";
+			
+			url = url.indexOf( "#" ) > -1 ? url.substr( url.indexOf( "#" ) + 1 ) : "";
+			
+			if (url != "") { 
+				for ( var i:int = 0; i < regexs.length; i++ ) {
+					
+					var match:Array = url.match( regexs[ i ] );
+					
+					if ( match != null ) {
+						processURLMapping( match, deepLinks[ i ] as DeepLinkMetadataTag, methods[ i ] as Function );
+					}
+				}
+			}
 		}
 		
 		// ========================================
@@ -249,24 +274,6 @@ package org.swizframework.processors.custom
 			if( deepLink.title != null )
 			{
 				browserManager.setTitle( constructUrl( deepLink.title, parameters ) );
-			}
-		}
-		
-		/**
-		 * Executed when the browser URL changes
-		 */
-		protected function browserUrlChangeHandler( event:BrowserChangeEvent ):void
-		{
-			var url:String = event.url != null && event.url.indexOf( "#" ) > -1 ? event.url.substr( event.url.indexOf( "#" ) + 1 ) : "";
-			
-			for ( var i:int = 0; i < regexs.length; i++ )
-			{
-				var match:Array = url.match( regexs[ i ] );
-				
-				if ( match != null )
-				{
-					processURLMapping( match, deepLinks[ i ] as DeepLinkMetadataTag, methods[ i ] as Function );
-				}
 			}
 		}
 		

@@ -12,6 +12,7 @@ package org.swizframework.processors.custom
 	import org.swizframework.core.ISwiz;
 	import org.swizframework.processors.BaseMetadataProcessor;
 	import org.swizframework.reflection.IMetadataTag;
+	import org.swizframework.utils.GlobalExceptionLogger;
 	import org.swizframework.utils.SwizLogger;
 	
 	/**
@@ -114,8 +115,10 @@ package org.swizframework.processors.custom
 		override public function init( swiz:ISwiz ):void {
 			super.init(swiz);
 			
-			// Allow custom override of category ID (which is used with filters
-			addLogTarget();			
+			// Allow custom override of category ID (which is used with filters)
+			// Then create a global Exception logger (for FlashPlayer 10.1)
+			addLogTarget();		
+			_globalExceptions = new GlobalExceptionLogger(true); 
 		}
 		
 		
@@ -234,6 +237,8 @@ package org.swizframework.processors.custom
 			return SwizLogger.getLogger(this);
 		}
 		
+		
+		static  protected  var    	_globalExceptions : GlobalExceptionLogger = null;
 		
 		static	protected  const 	LOG			:String 	 	= "Log";
 		static  protected  const    DUMMY_FILTER:String         = "dummy.remove.asap.*";
