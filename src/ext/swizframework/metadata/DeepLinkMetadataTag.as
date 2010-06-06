@@ -1,4 +1,4 @@
-package org.swizframework.metadata
+package ext.swizframework.metadata
 {
 	import org.swizframework.reflection.BaseMetadataTag;
 	import org.swizframework.reflection.IMetadataTag;

@@ -1,4 +1,4 @@
-package org.swizframework.utils
+package ext.swizframework.utils
 {
 	import flash.display.LoaderInfo;
 	import flash.events.Event;
@@ -9,6 +9,7 @@ package org.swizframework.utils
 	import mx.logging.LogEventLevel;
 	import mx.logging.targets.TraceTarget;
 	import mx.managers.ISystemManager;
+	import org.swizframework.utils.SwizLogger;
 	
 	/**
 	 * For use with Flex SDK 4 and FlashPlayer 10.1 or higher to catch all
@@ -28,6 +29,10 @@ package org.swizframework.utils
 	{
 		 public var loggingTarget  : ILoggingTarget = null;
 		 public var preventDefault : Boolean 		= false;
+		 
+		 public function get isReady() : Boolean {
+			 return (_loaderInfo && _loaderInfo.hasOwnProperty("uncaughtErrorEvents"));
+		 } 
 		 
 		 /**
 		  * Constructor with default args to support programmatic instantiation
@@ -76,7 +81,7 @@ package org.swizframework.utils
 			}
 		}
 		/**
-		 * Global Handler for uncaught errors/exceptions
+		 * Global Handler for uncaught errors/exceptions simply logs the error
 		 *  
 		 * @param event flash.events.UncaughtErrorEvent.UNCAUGHT_ERROR 
 		 * 

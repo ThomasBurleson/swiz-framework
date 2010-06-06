@@ -1,5 +1,7 @@
-package org.swizframework.processors.custom
+package ext.swizframework.processors
 {
+	import ext.swizframework.utils.GlobalExceptionLogger;
+	
 	import flash.utils.getDefinitionByName;
 	import flash.utils.getQualifiedClassName;
 	
@@ -11,8 +13,8 @@ package org.swizframework.processors.custom
 	import org.swizframework.core.Bean;
 	import org.swizframework.core.ISwiz;
 	import org.swizframework.processors.BaseMetadataProcessor;
+	import org.swizframework.processors.ProcessorPriority;
 	import org.swizframework.reflection.IMetadataTag;
-	import org.swizframework.utils.GlobalExceptionLogger;
 	import org.swizframework.utils.SwizLogger;
 	
 	/**
@@ -105,6 +107,18 @@ package org.swizframework.processors.custom
 		}
 		
 		
+		// ========================================
+		// public properties
+		// ========================================
+		
+		/**
+		 * Set the processing priority so the [Log] processor runs BEFORE the [Inject] or [Mediate]
+		 */
+		override public function get priority():int {
+			return ProcessorPriority.INJECT - 10;
+		}
+		
+		
 		/**
 		 * Init method to configure the processor and build default 
 		 * LoggerTarget if not provided
@@ -116,9 +130,15 @@ package org.swizframework.processors.custom
 			super.init(swiz);
 			
 			// Allow custom override of category ID (which is used with filters)
+			addLogTarget();	
+			
 			// Then create a global Exception logger (for FlashPlayer 10.1)
-			addLogTarget();		
 			_globalExceptions = new GlobalExceptionLogger(true); 
+			if (_globalExceptions.isReady == true) {
+				logger.debug( "added global error handler [GlobalExecptionLogger]; logs unhandled errors");	
+			} else {
+				logger.warn( "unable to configure global error handler; requires Flex 4 and FP 10.1.");
+			}
 		}
 		
 		
@@ -133,11 +153,10 @@ package org.swizframework.processors.custom
 				
 				// (1) Auto-add the target class package as Filter
 				// (2) Now inject the custom logger instance into the target class property
-				
 				autoAddLogFilter(classInstance);
 				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(classInstance);
-				
-				logger.debug( "LogProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() );
+
+				logger.debug( "set up {0} on {1}", metadataTag.toString(), bean.typeDescriptor.className );
 			}
 		}
 		
@@ -146,7 +165,7 @@ package org.swizframework.processors.custom
 		 */
 		override public function tearDownMetadataTag( metadataTag:IMetadataTag, bean:Bean ):void {
 			bean.source[ metadataTag.host.name ] = null;
-			logger.debug( "InjectProcessor tear down {0} on {1}", metadataTag.toString(), bean.toString() );
+			logger.debug( "tear down {0} on {1}", metadataTag.toString(), bean.toString() );
 		}
 		
 		/**
@@ -192,6 +211,8 @@ package org.swizframework.processors.custom
 				var clazzName   : String  = getQualifiedClassName( target );
 				var packages    : String  = clazzName.substr(0,clazzName.indexOf(":")) + ".*";
 				
+					logger.debug( "autoAddLogFilter for {0}", packages );
+					
 					// Append new package to existing list of filters
 					logTarget.filters = addToFilters(packages, logTarget.filters);
 			}

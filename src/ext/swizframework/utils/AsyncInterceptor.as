@@ -1,4 +1,4 @@
-package org.swizframework.utils
+package ext.swizframework.utils
 {
 	import flash.events.IEventDispatcher;
 	
@@ -92,7 +92,7 @@ package org.swizframework.utils
 		 * @param data ResultEvent 
 		 * 
 		 */
-		private function resultHandler(data:Object):void {
+		protected function resultHandler(data:Object):void {
 			var output : * = data;
 			
 			if (_resultTransform != null) {
@@ -116,7 +116,7 @@ package org.swizframework.utils
 		 * @param data FaultEvent 
 		 * 
 		 */
-		private function faultHandler(info:Object):void {
+		protected function faultHandler(info:Object):void {
 			var output : * = info;
 			
 			if (_faultTransform != null) {

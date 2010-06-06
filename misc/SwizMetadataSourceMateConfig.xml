@@ -21,4 +21,11 @@
 </metatag>
 <metatag name="PreDestroy" description="Decorated method will be called in response to tearDownEvent as specified in SwizConfig" classes="false" variables="false" functions="true" getters="false" setters="false" public="true" private="false" protected="false" internal="false" defaultAttribute="" onlyDefaultSyntax="false" since="1.0.0" allowCustomAttributes="false">
 </metatag>
+<metatag name="Log" description="Marks a property in which an ILogger reference should be injected" classes="false" variables="true" functions="false" getters="false" setters="true" public="true" private="false" protected="false" internal="false" defaultAttribute="" onlyDefaultSyntax="false" since="1.0.0" allowCustomAttributes="false">
+</metatag>
+<metatag name="DeepLink" description="Marks a method that should be invoked with the Browser URL changes" classes="false" variables="false" functions="true" getters="false" setters="false" public="true" private="false" protected="false" internal="false" defaultAttribute="" onlyDefaultSyntax="false" since="1.0.0" allowCustomAttributes="false">
+     <attribute name="title" datatype="0" description="" required="false"  defaultValue="" choices="" asType="" insertedByProposal="false" validForClasses="true" validForVariables="true" validForFunctions="true" validForGetters="false" validForSetters="true"  />
+     <attribute name="url" datatype="0" description="" required="true"  defaultValue="" choices="" asType="" insertedByProposal="false" validForClasses="false" validForVariables="false" validForFunctions="false" validForGetters="false" validForSetters="false"  />
+</metatag>
+
 </tags>

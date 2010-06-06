@@ -25,11 +25,11 @@
 	<component class="org.swizframework.utils.services.URLRequestHelper" />
 	
 	<!-- Custom Processors -->
-	<component class="org.swizframework.processors.custom.LogProcessor" />
-	<component class="org.swizframework.processors.custom.DeepLinkProcessor" />
+	<component class="ext.swizframework.processors.LogProcessor" />
+	<component class="ext.swizframework.processors.DeepLinkProcessor" />
 	
 	<!-- Custom Utilities -->
-	<component class="org.swizframework.utils.AsyncInterceptor" />
-	<component class="org.swizframework.utils.SWFAddressManager" />
+	<component class="ext.swizframework.utils.AsyncInterceptor" />
+	<component class="ext.swizframework.utils.SWFAddressManager" />
 
 </componentPackage>

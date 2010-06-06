@@ -24,8 +24,9 @@ package org.swizframework.utils.chain
 	{
 		private var _dispatcher:IEventDispatcher;
 		
-		public function ChainUtil()
+		public function ChainUtil(dispatcher:IEventDispatcher=null)
 		{
+			_dispatcher = dispatcher;
 		}
 		
 		/** IDispatcherAware implementation */

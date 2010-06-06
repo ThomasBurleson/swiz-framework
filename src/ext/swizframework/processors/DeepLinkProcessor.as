@@ -1,24 +1,80 @@
-package org.swizframework.processors.custom
+package ext.swizframework.processors
 {
 	import flash.events.Event;
 	
 	import mx.events.BrowserChangeEvent;
+	import mx.logging.ILogger;
 	import mx.managers.BrowserManager;
 	import mx.managers.IBrowserManager;
 	
 	import org.swizframework.core.Bean;
 	import org.swizframework.core.ISwiz;
-	import org.swizframework.metadata.DeepLinkMetadataTag;
+	import ext.swizframework.metadata.DeepLinkMetadataTag;
 	import org.swizframework.metadata.MediateMetadataTag;
+	import org.swizframework.processors.BaseMetadataProcessor;
 	import org.swizframework.reflection.ClassConstant;
 	import org.swizframework.reflection.Constant;
 	import org.swizframework.reflection.IMetadataTag;
 	import org.swizframework.reflection.TypeCache;
 	import org.swizframework.reflection.TypeDescriptor;
-	import org.swizframework.processors.BaseMetadataProcessor;
+	import org.swizframework.utils.SwizLogger;
 	
 	/**
-	 * [DeepLink] metadata processor
+	 * [DeepLink] metadata processor is a derivative of the excellent URLMapping class created by Ryan Campbell
+	 * His original version is documented on his blog http://www.ryancampbell.com/2010/03/26/introducing-the-swiz-urlmapping-metadata-processor/comment-page-1/#comment-2737 
+	 * This version has logging features and allows SWFAddress to be used instead of the Flex BrowserManager singleton. 
+	 * 
+	 *  Usage snippets
+	 * 
+	 * 	[DeepLink( url="/helloWorld" )]
+	 * 	public function sayHelloWorld():void
+	 * 	{
+	 * 		model.msg = "Hello world!";
+	 * 	}
+	 * 
+	 * The URL Mapping processor will automatically start listening for URL changes. For the above example, 
+	 * any time the URL changes to flexapp.html#/helloWorld the sayHelloWorld() method will automatically get 
+	 * called. Also, since url is the default metadata argument, the following example works exactly the same:
+	 * 
+	 * 	[DeepLink( "/helloWorld" )]
+	 * 	public function sayHelloWorld():void
+	 * 	{
+	 * 		model.msg = "Hello world!";
+	 * 	}
+	 * 
+	 * You can also use parts of the URL as parameters:
+	 * 
+	 * 	[DeepLink( "/hello/{0}" )]
+	 * 	public function sayHello( name:String ):void
+	 * 	{
+	 * 		model.msg = "Hello " + name + "!";
+	 * 	}
+	 * 
+	 * And optionally change the browser window title when the URL changes:
+	 * 
+	 * 	[DeepLink( url="/hello/{0}", title="Hello {0}!" )]
+	 * 	public function sayHello( name:String ):void
+	 * 	{
+	 * 		model.msg = "Hello " + name + "!";
+	 * 	}
+	 * 
+	 * Lastly, [DeepLink] also works in reverse with the help of the Swiz [Mediate] metadata. In this example 
+	 * the URL will change to /hello/Ryan and the browser window title to "Hello Ryan!" when the 
+	 * HelloEvent.HELLO event is dispatched:
+	 * 
+	 * 	[DeepLink( url="/hello/{0}", title="Hello {0}!" )]
+	 * 	[Mediate( event="HelloEvent.HELLO", properties="name" )]
+	 * 	public function sayHello( name:String ):void
+	 * 	{
+	 * 		model.msg = "Hello " + name + "!";
+	 * 	}
+	 * 
+	 * And then dispatch the event:
+	 * 
+	 * 		<s:TextInput id="nameInput" text="Ryan" />
+	 * 		<s:Button label="Say Hello" click="dispatchEvent( new HelloEvent( HelloEvent.HELLO, nameInput.text ) )" />
+ 	 * 
+ 	 * 
 	 */
 	public class DeepLinkProcessor extends BaseMetadataProcessor
 	{
@@ -94,7 +150,9 @@ package org.swizframework.processors.custom
 			var deepLink:DeepLinkMetadataTag = DeepLinkMetadataTag( metadataTag );
 			var method:Function = bean.source[ metadataTag.host.name ] as Function;
 			
-			addURLMapping( deepLink, method );
+			addDeepLink( deepLink, method );
+			
+			logger.debug( "Set up link url='{0}' on {1}", deepLink.url, metadataTag.host.name );
 		}
 		
 		/**
@@ -105,7 +163,8 @@ package org.swizframework.processors.custom
 			var deepLink:DeepLinkMetadataTag = DeepLinkMetadataTag( metadataTag );
 			var method:Function = bean.source[ metadataTag.host.name ] as Function;
 			
-			removeURLMapping( deepLink, method );
+			removeDeepLink( deepLink, method );
+			logger.debug( "Tear down link url='{0}' on {1}", deepLink.url, metadataTag.host.name );
 		}
 		
 		/**
@@ -116,13 +175,15 @@ package org.swizframework.processors.custom
 			
 			url = url.indexOf( "#" ) > -1 ? url.substr( url.indexOf( "#" ) + 1 ) : "";
 			
-			if (url != "") { 
+			if (url != "") {
+				logger.debug( "onBrowserURLChange(url='{0}')",url );
+
 				for ( var i:int = 0; i < regexs.length; i++ ) {
 					
 					var match:Array = url.match( regexs[ i ] );
 					
 					if ( match != null ) {
-						processURLMapping( match, deepLinks[ i ] as DeepLinkMetadataTag, methods[ i ] as Function );
+						processDeepLink( match, deepLinks[ i ] as DeepLinkMetadataTag, methods[ i ] as Function );
 					}
 				}
 			}
@@ -135,38 +196,38 @@ package org.swizframework.processors.custom
 		/**
 		 * Add a URL mapping
 		 */
-		protected function addURLMapping( deepLink:DeepLinkMetadataTag, method:Function ):void
+		protected function addDeepLink( deepLink:DeepLinkMetadataTag, method:Function ):void
 		{
+			logger.debug( "addDeepLink(url='{0}',title='{1}')", deepLink.url, deepLink.title );
+			
+			addMediate( deepLink );
+			
 			var index:int = deepLinks.length;
 			var regex:RegExp = new RegExp( "^" + deepLink.url.replace( /[\\\+\?\|\[\]\(\)\^\$\.\,\#]{1}/g, "\$1" ).replace( /\*/g, ".*" ).replace( /\{.+?\}/g, "(.+?)" ) + "$" );
 			
 			// add mapping to arrays
 			deepLinks[ index ] = deepLink;
-			methods[ index ] = method;
-			regexs[ index ] = regex;
+			methods[ index ]   = method;
+			regexs[ index ]    = regex;
 			
 			// check if mapping matches the current url
 			var url:String = browserManager.url != null ? browserManager.url.substr( browserManager.url.indexOf( "#" ) + 1 ) : "";
 			var match:Array = url.match( regex );
 			
 			// if a match is found, process the url change
-			if ( match != null )
-			{
-				processURLMapping( match, deepLink, method );
+			if ( match != null ) {
+				processDeepLink( match, deepLink, method );
 			}
-			
-			addMediate( deepLink );
 		}
 		
 		/**
 		 * Remove a URL mapping
 		 */
-		protected function removeURLMapping( deepLink:DeepLinkMetadataTag, method:Function ):void
-		{
-			var index:int = deepLinks.indexOf( deepLink );
+		protected function removeDeepLink( deepLink:DeepLinkMetadataTag, method:Function ):void {
+			logger.debug( "removeDeepLink(url='{0}',title='{1}')", deepLink.url, deepLink.title );
 			
-			if ( index != -1 )
-			{
+			var index:int = deepLinks.indexOf( deepLink );
+			if ( index != -1 ) {
 				// remove mapping from arrays
 				deepLinks.splice( index, 1 );
 				methods.splice( index, 1 );
@@ -183,10 +244,11 @@ package org.swizframework.processors.custom
 		{
 			if ( deepLink.host.hasMetadataTagByName( "Mediate" ) )
 			{
-				var mediateTag:MediateMetadataTag = new MediateMetadataTag();
+				var mediateTag : MediateMetadataTag = new MediateMetadataTag();
+				    mediateTag.copyFrom( deepLink.host.getMetadataTagByName( "Mediate" ) );
 				
-				mediateTag.copyFrom( deepLink.host.getMetadataTagByName( "Mediate" ) );
-				
+				logger.debug( "addMediate(event='{0}')", mediateTag.event );	
+					
 				if( mediateTag.event.substr( -2 ) == ".*" )
 				{
 					var clazz:Class = ClassConstant.getClass(swiz.domain, mediateTag.event, swiz.config.eventPackages );
@@ -211,24 +273,21 @@ package org.swizframework.processors.custom
 		 */
 		protected function removeMediate( deepLink:DeepLinkMetadataTag ):void
 		{
-			if ( deepLink.host.hasMetadataTagByName( "Mediate" ) )
-			{
-				var mediateTag:MediateMetadataTag = new MediateMetadataTag();
+			if ( deepLink.host.hasMetadataTagByName( "Mediate" ) ) {
+				var mediateTag : MediateMetadataTag = new MediateMetadataTag();
+					mediateTag.copyFrom( deepLink.host.getMetadataTagByName( "Mediate" ) );
 				
-				mediateTag.copyFrom( deepLink.host.getMetadataTagByName( "Mediate" ) );
+				logger.debug( "removeMediate(event='{0}')", mediateTag.event );
 				
-				if( mediateTag.event.substr( -2 ) == ".*" )
-				{
+				if( mediateTag.event.substr( -2 ) == ".*" ) {
 					var clazz:Class = ClassConstant.getClass(swiz.domain, mediateTag.event, swiz.config.eventPackages);
 					var td:TypeDescriptor = TypeCache.getTypeDescriptor( clazz, swiz.domain );
 					
-					for each( var constant:Constant in td.constants )
-					{
+					for each( var constant:Constant in td.constants ) {
 						removeEventHandler( deepLink, constant.value );
 					}
-				}
-				else
-				{
+					
+				} else {
 					var eventType:String = parseEventTypeExpression( mediateTag.event );
 					
 					removeEventHandler( deepLink, eventType );
@@ -243,6 +302,8 @@ package org.swizframework.processors.custom
 		{
 			swiz.dispatcher.addEventListener( eventType, mediateEventHandler );
 			mediateEventTypes[ mediateEventTypes.length ] = eventType;
+			
+			logger.debug( "add mediation handling for event='{0}'",eventType );
 		}
 		
 		/**
@@ -252,28 +313,31 @@ package org.swizframework.processors.custom
 		{
 			swiz.dispatcher.removeEventListener( eventType, mediateEventHandler );
 			mediateEventTypes.splice( mediateEventTypes.lastIndexOf( eventType ), 1 );
+			
+			logger.debug( "remove mediation handling for event='{0}'",eventType );
 		}
 		
 		/**
 		 * Process an incoming URL change
 		 */
-		protected function processURLMapping( match:Array, deepLink:DeepLinkMetadataTag, method:Function ):void
+		protected function processDeepLink( match:Array, deepLink:DeepLinkMetadataTag, method:Function ):void
 		{
 			var parameters:Array = [];
 			var placeholders:Array = deepLink.url.match( /\{\d+\}/g );
 			
-			for each ( var placeholder:String in placeholders )
-			{
+			for each ( var placeholder:String in placeholders ) {
 				var index:int = int( placeholder.substr( 1, placeholder.length - 2 ) ) + 1;
-				
 				parameters[ parameters.length ] = unescape( match[ index ] );
 			}
 			
+			logger.debug( "incoming url change invokes {0}({1})", String(method), parameters.toString() );
 			method.apply( null, parameters );
 			
-			if( deepLink.title != null )
-			{
-				browserManager.setTitle( constructUrl( deepLink.title, parameters ) );
+			if( deepLink.title != null ) {
+				var title : String = constructUrl( deepLink.title, parameters );
+				
+				browserManager.setTitle( title );
+				logger.debug( "browserManager.setTitle({0})", title );
 			}
 		}
 		
@@ -282,32 +346,38 @@ package org.swizframework.processors.custom
 		 */
 		protected function mediateEventHandler( event:Event ):void
 		{
-			var deepLink:DeepLinkMetadataTag = DeepLinkMetadataTag( deepLinks[ mediateEventTypes.lastIndexOf( event.type ) ] );
-			var mediate:IMetadataTag = deepLink.host.getMetadataTagByName( "Mediate" );
-			var args:Array = mediate.hasArg( "properties" ) ? getEventArgs( event, mediate.getArg( "properties" ).value.split( /\s*,\s*/ ) ) : null;
+			var deepLink: DeepLinkMetadataTag = DeepLinkMetadataTag( deepLinks[ mediateEventTypes.lastIndexOf( event.type ) ] );
+			var mediate	: IMetadataTag 		  = deepLink.host.getMetadataTagByName( "Mediate" );
+			var args	: Array 			  = mediate.hasArg( "properties" ) ? getEventArgs( event, mediate.getArg( "properties" ).value.split( /\s*,\s*/ ) ) : null;
 			
-			if( deepLink != null )
-			{
+			if( deepLink != null ) {
 				var url:String = deepLink.url;
+				    url = url.replace( /\*/g, "" );
 				
-				url = url.replace( /\*/g, "" );
-				
-				if( args != null )
-				{
-					for ( var i:int = 0; i < args.length; i++ )
-					{
+				if( args != null ) {
+					for ( var i:int = 0; i < args.length; i++ ) {
+						
 						url = url.replace( new RegExp( "\\{" + i + "\\}", "g" ), escape( args[ i ] ) );
 					}
 				}
 				
+				logger.debug( "for mediated event='{0}', browserManager.setFragment( '{1}' )",event.type, url );
 				browserManager.setFragment( url );
 				
-				if( deepLink.title != null )
-				{
-					browserManager.setTitle( constructUrl( deepLink.title, args ) );
+				if( deepLink.title != null ) {
+					var title : String = constructUrl( deepLink.title, args );
+					
+					logger.debug( "for mediated event='{0}', browserManager.setTitle( '{1}' )",event.type, title );
+					browserManager.setTitle( title );
 				}
 			}
 		}
+		
+		
+		// ********************************************************************************************************
+		// Utility Methods for Processor configuration
+		// ********************************************************************************************************
+		
 		
 		/**
 		 *
@@ -353,5 +423,15 @@ package org.swizframework.processors.custom
 			}
 		}
 		
+		
+		/**
+		 * On-demand access to the ILogger for LogProcessor class  
+		 * @return 
+		 * 
+		 */
+		protected function get logger():ILogger {
+			return SwizLogger.getLogger(this);
+		}
+				
 	}
 }

@@ -1,4 +1,4 @@
-package org.swizframework.utils
+package ext.swizframework.utils
 {
 	import com.asual.swfaddress.SWFAddress;
 	import com.asual.swfaddress.SWFAddressEvent;
@@ -104,7 +104,7 @@ package org.swizframework.utils
 			if (urlChangeHandler != null) {
 				var type : String = BrowserChangeEvent.BROWSER_URL_CHANGE;
 					
-				urlChangeHandler( new BrowserChangeEvent(type,false,false,event.path) );
+				urlChangeHandler.apply(null, new BrowserChangeEvent(type,false,false,event.path) );
 			}
 		}
 		
