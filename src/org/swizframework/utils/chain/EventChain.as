@@ -51,7 +51,8 @@ package org.swizframework.utils.chain
 		 */
 		public function doProceed():void
 		{
-			dispatcher.dispatchEvent( Event( steps[ position ] ) );
+			if( steps[ position ] is IAutonomousChainStep )		IAutonomousChainStep( steps[ position ] ).doProceed();
+			else												dispatcher.dispatchEvent( Event( steps[ position ] ) );
 		}
 	}
 }
