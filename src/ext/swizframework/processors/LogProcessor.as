@@ -135,9 +135,9 @@ package ext.swizframework.processors
 			// Then create a global Exception logger (for FlashPlayer 10.1)
 			_globalExceptions = new GlobalExceptionLogger(true); 
 			if (_globalExceptions.isReady == true) {
-				logger.debug( "added global error handler [GlobalExecptionLogger]; logs unhandled errors");	
+				logger.debug( "LogProcessor added global error handler [GlobalExecptionLogger]; logs unhandled errors");	
 			} else {
-				logger.warn( "unable to configure global error handler; requires Flex 4 and FP 10.1.");
+				logger.warn( "LogProcessor unable to configure global error handler; requires Flex 4 and FP 10.1.");
 			}
 		}
 		
@@ -156,7 +156,8 @@ package ext.swizframework.processors
 				autoAddLogFilter(classInstance);
 				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(classInstance);
 
-				logger.debug( "set up {0} on {1}", metadataTag.toString(), bean.typeDescriptor.className );
+				//logger.debug( "LogProcessor::setUpMetadataTags({0},{1})", metadataTag.toString(), bean.toString() );
+				logger.debug( "LogProcessor::setUpMetadataTags({0} {1},{2})", metadataTag.toString(), metadataTag.host.name.toString(), bean.typeDescriptor.className );
 			}
 		}
 		
@@ -165,7 +166,7 @@ package ext.swizframework.processors
 		 */
 		override public function tearDownMetadataTag( metadataTag:IMetadataTag, bean:Bean ):void {
 			bean.source[ metadataTag.host.name ] = null;
-			logger.debug( "tear down {0} on {1}", metadataTag.toString(), bean.toString() );
+			logger.debug( "LogProcessor::tearDownMetadataTag({0},{1})", metadataTag.toString(), bean.toString() );
 		}
 		
 		/**
@@ -211,7 +212,7 @@ package ext.swizframework.processors
 				var clazzName   : String  = getQualifiedClassName( target );
 				var packages    : String  = clazzName.substr(0,clazzName.indexOf(":")) + ".*";
 				
-					logger.debug( "autoAddLogFilter for {0}", packages );
+					logger.debug( "LogProcessor::autoAddLogFilter({0})", packages );
 					
 					// Append new package to existing list of filters
 					logTarget.filters = addToFilters(packages, logTarget.filters);
@@ -239,12 +240,13 @@ package ext.swizframework.processors
 				if (it == DUMMY_FILTER) continue;
 				
 				if (category.substring(0, len) != it.substring(0, len)) {
-					results.push(it);  // existing filter item to keep
-				} else found ||= true;
+					// existing filter item to keep
+					results.push(it);	
+				}
 			}
 			
-			// New category filter was not in list... so add it!
-			if (found != true) results.push(category);
+			// Add newest filter category filter was not in list... so add it!
+			results.push(category);
 			
 			return results;
 		}
