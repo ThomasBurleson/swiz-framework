@@ -122,7 +122,6 @@ package org.swizframework.utils.chain
 		 */
 		public function start():void
 		{
-			dispatchEvent( new ChainEvent( ChainEvent.CHAIN_START ) );
 			position = -1;
 			proceed();
 		}
@@ -148,8 +147,9 @@ package org.swizframework.utils.chain
 		/**
 		 *
 		 */
-		public function proceed():void
-		{
+		public function proceed():void {
+			if (position == -1) dispatchEvent( new ChainEvent( ChainEvent.CHAIN_START ) );
+			
 			if( mode == ChainType.SEQUENCE )
 			{
 				if( hasNext() )

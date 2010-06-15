@@ -23,7 +23,7 @@ package org.swizframework.utils.chain
 			super( mode, stopOnError );
 		}
 		
-		public function addCommand( command:CommandChainStep ):CommandChain {
+		public function addCommand( command:IChainStep ):CommandChain {
 			addStep(command);
 			return this;
 		}
@@ -31,10 +31,12 @@ package org.swizframework.utils.chain
 		/**
 		 *
 		 */
-		public function doProceed():void
-		{
-			if( steps[ position ] is IAutonomousChainStep )		IAutonomousChainStep( steps[ position ] ).doProceed();
-			else 												CommandChainStep( steps[ position ] ).execute();
+		public function doProceed():void {
+			var currentStep : * = steps[ position ];
+			
+			if      (currentStep is IAutonomousChainStep )		IAutonomousChainStep ( currentStep ).doProceed();
+			else if (currentStep is CommandChainStep)			CommandChainStep	 ( currentStep ).execute();
+			else if (currentStep is AbstractChain)				AbstractChain		 ( currentStep ).start();
 		}
 	}
 }
