@@ -378,22 +378,18 @@ package org.osflash.thunderbolt
 		 */							
 		private static function primitiveType (type: String): Boolean
 		{
-			var isPrimitiveType: Boolean;
+			var isPrimitiveType: Boolean = false;
 			
 			switch (type) 
 			{
-				case "Boolean":
-				case "void":
-				case "int":
-				case "uint":
-				case "Number":
-				case "String":
+				case "Boolean"	:
+				case "void"		:
+				case "int"		:
+				case "uint"		:
+				case "Number"	:
+				case "String"	:
 				case "undefined":
-				case "null":
-					isPrimitiveType = true;
-					break;			
-				default:
-					isPrimitiveType = false;
+				case "null"		:	isPrimitiveType = true;		break;			
 			}
 
 			return isPrimitiveType;
@@ -406,8 +402,7 @@ package org.osflash.thunderbolt
 		 
 		private static function getCurrentTime ():String
 	    {
-    		var currentDate: Date = new Date();
-    		
+    		var currentDate: Date   =   new Date();
 			var currentTime: String = 	timeToValidString(currentDate.getHours()) 
 										+ ":" 
 										+ timeToValidString(currentDate.getMinutes()) 
@@ -437,76 +432,49 @@ package org.osflash.thunderbolt
 		* @see: http://github.com/jonathanbranam/360flex08_presocode/
 		 * 
 	    */
-		private static function stackDataFromStackTrace(stackTrace: String): StackData
-		{
-			// Check stackTrace
-			// Note: It seems that there some issues to match it using Flash IDE, so we use an empty Array instead
-			var matches:Array = stackTrace.match(/^\tat (?:(.+)::)?(.+)\/(.+)\(\)\[(?:(.+)\:(\d+))?\]$/)
-								|| new Array(); 				
-				
-			var stackData: StackData = new StackData();		
- 			stackData.packageName = matches[1] || "";
-			stackData.className = matches[2] || "";
-			stackData.methodName = matches[3] || "";
-			stackData.fileName = matches[4] || "";
-			stackData.lineNumber = int( matches[5] ) || 0;	
-
-			return stackData;
-	
+		private static function stackDataFromStackTrace(stackTrace: String): StackData {
+			// Check stackTrace - Note: It seems that there some issues to match it using Flash IDE, so we use an empty Array instead
+			var matches:Array = stackTrace.match(/^\tat (?:(.+)::)?(.+)\/(.+)\(\)\[(?:(.+)\:(\d+))?\]$/) || new Array(); 				
+			
+					function match(j:int,defaultVal:*=""):String {
+						return (j < matches.length) ? matches[j] : defaultVal;
+					}
+			
+			return  new StackData(match(1), match(2), match(3),match(4), match(5,0));
 		}	    
+		
 	    /** 
 	    * Message about details of a caller who logs anything
 	    * @return String	message of details
 	    */
 		private static function logCaller(): String
 		{
- 			var debugError: Error;
- 			var message: String = '';
+ 			var debugError : Error  = null;
+ 			var message    : String = '';
 			
             try {
-				var errorObject: Object;
-                errorObject.halli = "galli";
-            } 
-            catch( error: Error )
-            {
-            	debugError = new Error();
-            }
-            finally
-            {
-            	var stackTrace:String = debugError.getStackTrace();
+            	
+				debugError = new Error();
+				
+            } finally {
+				
             	// track all stacks only if we have a stackTrace
-				if ( stackTrace != null )
-	    		{
+            	var stackTrace:String = debugError.getStackTrace();
+				
+				if ( stackTrace != null ) {
  		    		var stacks:Array = stackTrace.split("\n");
 
-		    		if ( stacks != null )
-		    		{
-		    			var stackData: StackData;
-		    			
-		    			// stacks data for using Logger 
-		    			
-/* 		    			trace ("stacks.length " + stacks.length); */
-
-		    			if ( stacks.length >= 5 )
-		    				 stackData = Logger.stackDataFromStackTrace( stacks[ 4 ] );
-						
+		    		if ( stacks != null ) {
 						// special stack data for using ThunderBoldTarget which is a subclass of mx.logging.AbstractTarget
-						if ( stackData.className == "AbstractTarget" &&  stacks.length >= 9 )
-							stackData = Logger.stackDataFromStackTrace( stacks[ 8 ] );
-
 						// show details of stackData only if it available
-						if ( stackData != null )
-						{
-/* 							trace ("stackData " + stackData.toString() );  */
-							 			
-							message += ( stackData.packageName != "") 
-										? stackData.packageName + "."
-										: stackData.packageName;
-																			
-							message += stackData.className;
-							
-							if ( stackData.lineNumber > 0  )
-								message += " [" + stackData.lineNumber + "]" + Logger.FIELD_SEPERATOR;
+						
+						var isValidStack : Boolean   = (String(stacks[4]).indexOf("mx.logging::AbstractTarget") > -1) &&  (stacks.length >= 9); 
+		    			var data         : StackData = isValidStack ? Logger.stackDataFromStackTrace( stacks[ 8 ] ) : null;
+		    			
+						if ( data != null ) {
+							message += (data.packageName && data.packageName != "") ? data.packageName + "." : data.packageName;
+							message += data.className;
+							message += (data.lineNumber > 0) ? " [" + data.lineNumber + "]" + Logger.FIELD_SEPERATOR : "";  
 						}
 		    		}  		    			
 	    		}               
@@ -536,11 +504,19 @@ package org.osflash.thunderbolt
 
 internal class StackData
 {
-	public var packageName: String;
-	public var className: String;
-	public var methodName: String;
-	public var fileName: String;
-	public var lineNumber: int;
+	public var packageName	: String;
+	public var className	: String;
+	public var methodName	: String;
+	public var fileName		: String;
+	public var lineNumber	: int;
+	
+	public function StackData(packageName:String, className:String, methodName:String, fileName:String, lineNumber:int) {
+		this.packageName = packageName == null ? "" : packageName;
+		this.className	 = className;
+		this.methodName	 = methodName;
+		this.fileName	 = fileName;
+		this.lineNumber	 = lineNumber;
+	}
 	
 	public function toString(): String
 	{
