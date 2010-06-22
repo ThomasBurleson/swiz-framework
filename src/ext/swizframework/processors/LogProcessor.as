@@ -2,7 +2,6 @@ package ext.swizframework.processors
 {
 	import ext.swizframework.utils.GlobalExceptionLogger;
 	
-	import flash.utils.getDefinitionByName;
 	import flash.utils.getQualifiedClassName;
 	
 	import mx.logging.ILogger;
@@ -15,7 +14,7 @@ package ext.swizframework.processors
 	import org.swizframework.processors.BaseMetadataProcessor;
 	import org.swizframework.processors.ProcessorPriority;
 	import org.swizframework.reflection.IMetadataTag;
-	import org.swizframework.utils.SwizLogger;
+	import org.swizframework.utils.LoggerRegistry;
 	
 	/**
 	 * This Metadata Tag processor supports the [Log] tag to inject a logger reference.
@@ -72,13 +71,19 @@ package ext.swizframework.processors
 	 */
 	public class LogProcessor extends BaseMetadataProcessor
 	{
+		/**
+		 * Provides optional override of SwizLogger so custom classes
+		 * can be used; e.g. ThunderLogger 
+		 */
+		public var loggerClass : Class = null;
+		
 		public function set loggingTarget(val:ILoggingTarget):void 	{   settings.loggingTarget = val;	}
 		public function set level(value:int)			  	:void	{	settings.level = value;			}
 		public function set filters(value:Array)		  	:void 	{	settings.filters = value;			}
 		public function set includeDate(value:Boolean)	  	:void 	{	settings.includeDate = value;		}
 		public function set includeTime(value:Boolean)	  	:void	{	settings.includeTime = value;		}
 		public function set includeCategory(value:Boolean)	:void	{	settings.includeCategory = value;	}
-		public function set includeLevel(value:Boolean)	  	:void	{	settings.includeLevel = value;	}
+		public function set includeLevel(value:Boolean)	  	:void	{	settings.includeLevel = value;		}
 		
 		/**
 		 * Constructor to support programmatic instantiation
@@ -130,7 +135,7 @@ package ext.swizframework.processors
 			super.init(swiz);
 			
 			// Allow custom override of category ID (which is used with filters)
-			addLogTarget();	
+			buildLogTarget();	
 			
 			// Then create a global Exception logger (for FlashPlayer 10.1)
 			_globalExceptions = new GlobalExceptionLogger(true); 
@@ -154,7 +159,7 @@ package ext.swizframework.processors
 				// (1) Auto-add the target class package as Filter
 				// (2) Now inject the custom logger instance into the target class property
 				autoAddLogFilter(classInstance);
-				bean.source[ metadataTag.host.name ] = SwizLogger.getLogger(classInstance);
+				bean.source[ metadataTag.host.name ] = LoggerRegistry.getLogger(classInstance,loggerClass); 
 
 				//logger.debug( "LogProcessor::setUpMetadataTags({0},{1})", metadataTag.toString(), bean.toString() );
 				logger.debug( "LogProcessor::setUpMetadataTags({0} {1},{2})", metadataTag.toString(), metadataTag.host.name.toString(), bean.typeDescriptor.className );
@@ -169,11 +174,12 @@ package ext.swizframework.processors
 			logger.debug( "LogProcessor::tearDownMetadataTag({0},{1})", metadataTag.toString(), bean.toString() );
 		}
 		
+		
 		/**
 		 * Build a default LoggingTarget if not specified in the LogProcessor instantiation. 
 		 * 
 		 */
-		private function addLogTarget() : void {
+		private function buildLogTarget() : void {
 			if (!settings.filters || settings.filters.length==0) {
 				settings.filters = [DUMMY_FILTER]; 
 			} 
@@ -194,7 +200,7 @@ package ext.swizframework.processors
 				settings.loggingTarget  = target;
 			}
 			
-			SwizLogger.addLoggingTarget(logTarget);
+			LoggerRegistry.addLoggingTarget(logTarget);
 		}
 		
 		/**
@@ -205,7 +211,7 @@ package ext.swizframework.processors
 		 * 
 		 */
 		private function autoAddLogFilter(target:Object):void {
-			var logTarget : TraceTarget = settings.loggingTarget as TraceTarget;
+			var logTarget : ILoggingTarget = settings.loggingTarget as ILoggingTarget;
 			if (logTarget != null) {
 				logTarget.filters ||= [];
 				
@@ -257,7 +263,7 @@ package ext.swizframework.processors
 		 * 
 		 */
 		protected function get logger():ILogger {
-			return SwizLogger.getLogger(this);
+			return LoggerRegistry.getLogger(this,loggerClass); 
 		}
 		
 		
@@ -267,6 +273,7 @@ package ext.swizframework.processors
 		static  protected  const    DUMMY_FILTER:String         = "dummy.remove.asap.*";
 		
 				protected  var      settings 	:CachedSettings = null;
+
 	}
 }
 
@@ -276,7 +283,6 @@ import flash.utils.getQualifiedClassName;
 
 import mx.logging.ILoggingTarget;
 import mx.logging.LogEventLevel;
-import mx.utils.StringUtil;
 
 /**
  * Helper class used to cache all initialization settings associated with LoggingTarget

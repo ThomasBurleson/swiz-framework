@@ -31,5 +31,7 @@
 	<!-- Custom Utilities -->
 	<component class="ext.swizframework.utils.AsyncInterceptor" />
 	<component class="ext.swizframework.utils.SWFAddressManager" />
+	
+	<component class="org.osflash.thunderbolt.ThunderBoltTarget" />
 
 </componentPackage>
