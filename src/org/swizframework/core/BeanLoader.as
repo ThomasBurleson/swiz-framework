@@ -18,7 +18,7 @@ package org.swizframework.core
 {
 	import mx.logging.ILogger;
 	
-	import org.swizframework.utils.SwizLogger;
+	import org.swizframework.utils.logging.SwizLogger;
 
 	/**
 	 * @deprecated 

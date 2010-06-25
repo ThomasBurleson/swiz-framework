@@ -14,7 +14,7 @@
  * the License.
  */
 
-package org.swizframework.utils
+package org.swizframework.utils.logging
 {
 	
 	import flash.events.EventDispatcher;

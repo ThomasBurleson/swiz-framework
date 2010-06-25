@@ -9,7 +9,7 @@ package ext.swizframework.utils
 	import mx.logging.LogEventLevel;
 	import mx.logging.targets.TraceTarget;
 	import mx.managers.ISystemManager;
-	import org.swizframework.utils.SwizLogger;
+	import org.swizframework.utils.logging.SwizLogger;
 	
 	/**
 	 * For use with Flex SDK 4 and FlashPlayer 10.1 or higher to catch all

@@ -14,7 +14,7 @@ package ext.swizframework.processors
 	import org.swizframework.processors.BaseMetadataProcessor;
 	import org.swizframework.processors.ProcessorPriority;
 	import org.swizframework.reflection.IMetadataTag;
-	import org.swizframework.utils.LoggerRegistry;
+	import org.swizframework.utils.logging.LoggerRegistry;
 	
 	/**
 	 * This Metadata Tag processor supports the [Log] tag to inject a logger reference.

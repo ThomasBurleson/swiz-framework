@@ -31,7 +31,7 @@ package org.swizframework.core
 	import org.swizframework.processors.PostConstructProcessor;
 	import org.swizframework.processors.PreDestroyProcessor;
 	import org.swizframework.processors.SwizInterfaceProcessor;
-	import org.swizframework.utils.SwizLogger;
+	import org.swizframework.utils.logging.SwizLogger;
 	
 	[DefaultProperty( "beanProviders" )]
 	[ExcludeClass]

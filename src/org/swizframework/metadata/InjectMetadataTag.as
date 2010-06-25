@@ -20,7 +20,7 @@ package org.swizframework.metadata
 	
 	import org.swizframework.reflection.BaseMetadataTag;
 	import org.swizframework.reflection.IMetadataTag;
-	import org.swizframework.utils.SwizLogger;
+	import org.swizframework.utils.logging.SwizLogger;
 	
 	/**
 	 * Class to represent <code>[Inject]</code> metadata tags.

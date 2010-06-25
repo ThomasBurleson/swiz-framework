@@ -1,4 +1,4 @@
-package org.swizframework.utils
+package org.swizframework.utils.logging
 {
 	import flash.utils.Dictionary;
 	import flash.utils.getQualifiedClassName;
