@@ -16,6 +16,7 @@
 
 package org.swizframework.core
 {
+	import flash.display.DisplayObject;
 	import flash.events.EventDispatcher;
 	import flash.events.IEventDispatcher;
 	import flash.system.ApplicationDomain;
@@ -310,9 +311,7 @@ package org.swizframework.core
 			
 			initializeProcessors();
 			
-			beanFactory.init( this );
-			
-			beanFactory.setUpBeans();
+			beanFactory.setUp( this );
 			
 			logger.info( "Swiz initialized" );
 		}
@@ -322,9 +321,14 @@ package org.swizframework.core
 		 */
 		public function tearDown():void
 		{
+			// tear down any child views that have been wired
+			SwizManager.tearDownAllWiredViewsForSwizInstance( this );
+			
+			// tear down beans defined in bean providers or added with BeanEvents
+			beanFactory.tearDown();
+			
+			// clear out refs
 			parentSwiz = null;
-			beanFactory.tearDownBeans();
-			//TypeCache.flushDomain( domain );
 			SwizManager.removeSwiz( this );
 		}
 		
@@ -334,7 +338,7 @@ package org.swizframework.core
 		
 		protected function initializeProcessors():void
 		{
-			processors.sortOn( "priority" );
+			processors.sortOn( "priority", Array.DESCENDING | Array.NUMERIC );
 			
 			for each( var processor:IProcessor in processors )
 			{

@@ -31,7 +31,9 @@ package org.swizframework.factories
 	 */
 	public class MetadataHostFactory
 	{
-		public function MetadataHostFactory() {
+		public function MetadataHostFactory()
+		{
+			
 		}
 		
 		/**

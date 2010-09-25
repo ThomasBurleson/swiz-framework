@@ -81,7 +81,6 @@ package org.swizframework.reflection
 		
 		protected var metadataHostFactory:MetadataHostFactory = new MetadataHostFactory();
 		
-		
 		// ========================================
 		// constructor
 		// ========================================
@@ -113,7 +112,6 @@ package org.swizframework.reflection
 			for each( var mdNode:XML in description..metadata )
 			{
 				var metadataName:String = mdNode.@name;
-				
 				// flex 4 includes crazy metadata on every single property and method
 				// in debug mode. the name starts with _, so we ignore that
 				if( metadataName.indexOf( "_" ) == 0 || SwizManager.metadataNames.indexOf( metadataName ) < 0 )

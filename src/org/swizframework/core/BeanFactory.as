@@ -52,35 +52,14 @@ package org.swizframework.core
 		/**
 		 *
 		 */
-		protected var typeDescriptors:Dictionary;
-		
-		/**
-		 *
-		 */
 		protected var _parentBeanFactory:IBeanFactory;
+		
+		protected var _beans:Array = [];
 		
 		// ========================================
 		// public properties
 		// ========================================
 		
-		/**
-		 * Backing variable for <code>beans</code> getter/setter.
-		 */
-		protected var _beans:Array = [];
-		
-		// ========================================
-		// private properties
-		// ========================================
-		
-		/**
-		 * Cache of instances created by prototypes, so we can pass them to processors 
-		 * for tearDown.
-		 *
-		protected var transients:Array = []; */
-		
-		/**
-		 * BeanFactories will pull all beans from BeanProviders into a local cache.
-		 */
 		public function get beans():Array
 		{
 			return _beans;
@@ -98,6 +77,7 @@ package org.swizframework.core
 			super();
 		}
 		
+		
 		// ========================================
 		// public methods
 		// ========================================
@@ -105,14 +85,26 @@ package org.swizframework.core
 		/**
 		 * @inheritDoc
 		 */
-		public function init( swiz:ISwiz ):void
+		public function setUp( swiz:ISwiz ):void
 		{
 			this.swiz = swiz;
 			
-			addBeanProviders( swiz.beanProviders );
-			
+			swiz.dispatcher.addEventListener( BeanEvent.ADD_BEAN, handleBeanEvent );
 			swiz.dispatcher.addEventListener( BeanEvent.SET_UP_BEAN, handleBeanEvent );
 			swiz.dispatcher.addEventListener( BeanEvent.TEAR_DOWN_BEAN, handleBeanEvent );
+			swiz.dispatcher.addEventListener( BeanEvent.REMOVE_BEAN, handleBeanEvent );
+			
+			for each( var beanProvider:IBeanProvider in swiz.beanProviders )
+			{
+				addBeanProvider( beanProvider, false );
+			}
+			
+			// bean setup has to be delayed until after all startup beans have been added
+			for each( var bean:Bean in beans )
+			{
+				if( !( bean is Prototype ) )
+					setUpBean( bean );
+			}
 			
 			logger.info( "BeanFactory initialized" );
 			
@@ -125,37 +117,114 @@ package org.swizframework.core
 			logger.debug( "Set up event priority set to {0}", swiz.config.setUpEventPriority );
 			
 			if( "systemManager" in swiz.dispatcher && swiz.dispatcher[ "systemManager" ] != null && !( swiz.dispatcher[ "systemManager" ].hasEventListener( swiz.config.setUpEventType ) ) )
+			{
 				swiz.dispatcher[ "systemManager" ].addEventListener( swiz.config.setUpEventType, setUpEventHandlerSysMgr, ( swiz.config.setUpEventPhase == EventPhase.CAPTURING_PHASE ), swiz.config.setUpEventPriority, true );
+				swiz.dispatcher[ "systemManager" ].addEventListener( swiz.config.tearDownEventType, tearDownEventHandler, ( swiz.config.tearDownEventPhase == EventPhase.CAPTURING_PHASE ), swiz.config.tearDownEventPriority, true );
+			}
 			
 			swiz.dispatcher.addEventListener( swiz.config.tearDownEventType, tearDownEventHandler, ( swiz.config.tearDownEventPhase == EventPhase.CAPTURING_PHASE ), swiz.config.tearDownEventPriority, true );
 			logger.debug( "Tear down event type set to {0}", swiz.config.tearDownEventType );
 			logger.debug( "Tear down event phase set to {0}", ( swiz.config.tearDownEventPhase == EventPhase.CAPTURING_PHASE ) ? "capture phase" : "bubbling phase" );
 			logger.debug( "Tear down event priority set to {0}", swiz.config.tearDownEventPriority );
+			
+			if( swiz.dispatcher )
+			{
+				// as long as the dispatcher is a view, set it up like any other view
+				// this allows it to be automatically torn down if caught by tearDownEventHandler()
+				if( swiz.dispatcher is DisplayObject )
+					SwizManager.setUp( DisplayObject( swiz.dispatcher ) );
+				else
+					setUpBean( createBeanFromSource( swiz.dispatcher ) );
+			}
 		}
 		
-		/**
-		 *
-		 */
-		protected function handleBeanEvent( event:BeanEvent ):void
+		public function tearDown():void
 		{
-			var bean:Bean;
+			for each( var beanProvider:IBeanProvider in swiz.beanProviders )
+			{
+				removeBeanProvider( beanProvider );
+			}
 			
-			if( event.type == BeanEvent.SET_UP_BEAN )
+			swiz.dispatcher.removeEventListener( BeanEvent.ADD_BEAN, handleBeanEvent );
+			swiz.dispatcher.removeEventListener( BeanEvent.SET_UP_BEAN, handleBeanEvent );
+			swiz.dispatcher.removeEventListener( BeanEvent.TEAR_DOWN_BEAN, handleBeanEvent );
+			swiz.dispatcher.removeEventListener( BeanEvent.REMOVE_BEAN, handleBeanEvent );
+			
+			swiz.dispatcher.removeEventListener( swiz.config.setUpEventType, setUpEventHandler, ( swiz.config.setUpEventPhase == EventPhase.CAPTURING_PHASE ) );
+			swiz.dispatcher.removeEventListener( swiz.config.tearDownEventType, tearDownEventHandler, ( swiz.config.tearDownEventPhase == EventPhase.CAPTURING_PHASE ) );
+			
+			if( "systemManager" in swiz.dispatcher && swiz.dispatcher[ "systemManager" ] != null && swiz.dispatcher[ "systemManager" ].hasEventListener( swiz.config.setUpEventType ) )
 			{
-				bean = constructBean( event.bean, event.beanName, swiz.domain );
-				beans.push( bean );
+				swiz.dispatcher[ "systemManager" ].removeEventListener( swiz.config.setUpEventType, setUpEventHandlerSysMgr, ( swiz.config.setUpEventPhase == EventPhase.CAPTURING_PHASE ) );
+				swiz.dispatcher[ "systemManager" ].removeEventListener( swiz.config.tearDownEventType, tearDownEventHandler, ( swiz.config.tearDownEventPhase == EventPhase.CAPTURING_PHASE ) );
+			}
+			
+			logger.info( "BeanFactory torn down" );
+		}
+		
+		public function createBeanFromSource( source:Object, beanName:String = null ):Bean
+		{
+			var bean:Bean = getBeanForSource( source );
+			
+			if( bean == null )
+				bean = constructBean( source, beanName, swiz.domain );
+			
+			return bean;
+		}
+		
+		public function getBeanForSource( source:Object ):Bean
+		{
+			for each( var bean:Bean in beans )
+			{
+				if( bean is Prototype && Prototype( bean ).singleton == false )
+					continue;
+				else if( bean.source === source )
+					return bean;
+			}
+			
+			return null;
+		}
+		
+		public function addBeanProvider( beanProvider:IBeanProvider, autoSetUpBeans:Boolean = true ):void
+		{
+			for each( var bean:Bean in beanProvider.beans )
+			{
+				addBean( bean, autoSetUpBeans );
+			}
+		}
+		
+		public function addBean( bean:Bean, autoSetUpBean:Boolean = true ):Bean
+		{
+			bean.beanFactory = this;
+			beans.push( bean );
+			
+			if( autoSetUpBean )
 				setUpBean( bean );
-			}
-			else
+			
+			return bean;
+		}
+		
+		public function removeBeanProvider( beanProvider:IBeanProvider ):void
+		{
+			for each( var bean:Bean in beanProvider.beans )
 			{
-				// get the right bean object
-				for each( bean in beans )
-				{
-					if( event.bean == bean || event.bean == bean.source )
-						tearDownBean( constructBean( event.bean, null, swiz.domain ) );
-				}
-					// TODO: log warning bean was not found
+				removeBean( bean );
 			}
+		}
+		
+		public function removeBean( bean:Bean ):void
+		{
+			if( beans.indexOf( bean ) < 0 )
+			{
+				logger.warn( "{0} not found in beans list. Cannot remove." );
+			}
+				
+			tearDownBean( bean );
+			bean.beanFactory = null;
+			bean.typeDescriptor = null;
+			bean.source = null;
+			beans.splice( beans.indexOf( bean ), 1 );
+			bean = null;
 		}
 		
 		public function getBeanByName( name:String ):Bean
@@ -172,7 +241,7 @@ package org.swizframework.core
 			}
 			
 			if( foundBean != null && !( foundBean is Prototype ) && !foundBean.initialized )
-				setUpBean(foundBean);
+				setUpBean( foundBean );
 			else if( foundBean == null && parentBeanFactory != null )
 				foundBean = parentBeanFactory.getBeanByName( name );
 			
@@ -216,46 +285,14 @@ package org.swizframework.core
 			return _parentBeanFactory;
 		}
 		
-		// ========================================
-		// protected methods
-		// ========================================
-		
-		/**
-		 * Add Bean Providers
-		 */
-		protected function addBeanProviders( beanProviders:Array ):void
-		{
-			for each( var beanProvider:IBeanProvider in beanProviders )
-			{
-				for each( var bean:Bean in beanProvider.beans )
-				{
-					bean.beanFactory = this;
-					_beans.push( bean );
-				}
-			}
-		}
-		
-		/**
-		 * Initializes all beans in the beans cache.
-		 */
-		public function setUpBeans():void
-		{
-			for each( var bean:Bean in beans )
-			{
-				if( !( bean is Prototype ) && !bean.initialized )
-					setUpBean( bean );
-			}
-			
-			// if the core dispatcher is a display object, set it up as well
-			if ( swiz.dispatcher is DisplayObject )
-				SwizManager.setUp( DisplayObject( swiz.dispatcher ) );
-		}
-		
 		/**
 		 * Initialze Bean
 		 */
 		public function setUpBean( bean:Bean ):void
 		{
+			if( bean.initialized )
+				return;
+			
 			logger.debug( "BeanFactory::setUpBean( {0} )", bean );
 			bean.initialized = true;
 			
@@ -285,18 +322,8 @@ package org.swizframework.core
 			}
 		}
 		
-		public function tearDownBeans():void
-		{
-			var bean:Bean;
-			// tear down all beans
-			for each( bean in beans )
-			{
-				tearDownBean( bean );
-			}
-		}
-		
 		/**
-		 * Remove Bean
+		 * Tear down the specified Bean, or any bean with the same source, and remove it from the cache.
 		 */
 		public function tearDownBean( bean:Bean ):void
 		{
@@ -323,9 +350,56 @@ package org.swizframework.core
 					IBeanProcessor( processor ).tearDownBean( bean );
 				}
 			}
+			
+			bean.initialized = false;
 		}
 		
-		// TODO: Move to SwizConfig?
+		
+		// ========================================
+		// protected methods
+		// ========================================
+		
+		/**
+		 * Handle bean set up and tear down events.
+		 */
+		protected function handleBeanEvent( event:BeanEvent ):void
+		{
+			var existingBean:Bean = getBeanForSource( event.source );
+			
+			switch( event.type )
+			{
+				case BeanEvent.ADD_BEAN:
+					if( existingBean )
+						logger.warn( "{0} already exists as a bean. Ignoring ADD_BEAN request.", event.source.toString() );
+					else
+						addBean( createBeanFromSource( event.source, event.beanName ) );
+					break;
+				
+				case BeanEvent.SET_UP_BEAN:
+					if( existingBean )
+						if( existingBean.initialized )
+							logger.warn( "{0} is already set up as a bean. Ignoring SET_UP_BEAN request.", event.source.toString() );
+						else
+							setUpBean( existingBean );
+					else
+						setUpBean( createBeanFromSource( event.source, event.beanName ) );
+					break;
+				
+				case BeanEvent.TEAR_DOWN_BEAN:
+					if( existingBean )
+						tearDownBean( existingBean );
+					else
+						logger.warn( "Could not find bean with {0} as its source. Ignoring TEAR_DOWN_BEAN request.", event.source.toString() );
+					break;
+				
+				case BeanEvent.REMOVE_BEAN:
+					if( existingBean )
+						removeBean( existingBean );
+					else
+						logger.warn( "Could not find bean with {0} as its source. Ignoring REMOVE_BEAN request.", event.source.toString() );
+					break;
+			}
+		}
 		
 		/**
 		 * Evaluate whether Swiz is configured such that the specified class is a potential injection target.
@@ -385,13 +459,14 @@ package org.swizframework.core
 		 */
 		protected function tearDownEventHandler( event:Event ):void
 		{
-			if( isPotentialInjectionTarget( event.target ) )
-			{
-				SwizManager.tearDown( DisplayObject( event.target ) );
-			}
+			SwizManager.tearDown( DisplayObject( event.target ) );
 		}
+
 		
-		// both init method and setBeanIds will call this if needed
+		// ========================================
+		// static methods
+		// ========================================
+		
 		public static function constructBean( obj:*, name:String, domain:ApplicationDomain ):Bean
 		{
 			var bean:Bean;

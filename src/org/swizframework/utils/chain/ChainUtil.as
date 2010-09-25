@@ -24,9 +24,8 @@ package org.swizframework.utils.chain
 	{
 		private var _dispatcher:IEventDispatcher;
 		
-		public function ChainUtil(dispatcher:IEventDispatcher=null)
+		public function ChainUtil()
 		{
-			_dispatcher = dispatcher;
 		}
 		
 		/** IDispatcherAware implementation */
@@ -36,21 +35,16 @@ package org.swizframework.utils.chain
 		}
 		
 		/** Constructs a dynamic command */
-		static public function createChain( mode:String = ChainType.SEQUENCE ):CommandChain
-		{
-			return new CommandChain( mode );
-		}
-
-		/** Constructs a dynamic command */
-		static public function createAsyncCommand( delayedCall:Function, args:Array, resultHandler:Function,
+		public function createCommand( delayedCall:Function, args:Array, resultHandler:Function,
 									   faultHandler:Function = null, resultHandlerArgs:Array = null ):AsyncCommandChainStep
 		{
 			return new AsyncCommandChainStep( delayedCall, args, resultHandler, faultHandler, resultHandlerArgs );
 		}
 		
-		
-		static public function createFunction(method:Function, funcArgs:Array = null, funcScope:* = null):FunctionChainStep {
-			return new FunctionChainStep(method,funcArgs,funcScope);
-		} 
+		/** Constructs a dynamic command */
+		public function createChain( mode:String = ChainType.SEQUENCE ):CommandChain
+		{
+			return new CommandChain( mode );
+		}
 	}
 }

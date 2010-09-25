@@ -3,6 +3,12 @@ This forked repository contains [customized extensions](http://wiki.github.com/T
 Custom extension include the LogProcessor, DeepLinkeProcessor, and the AsyncInterceptor; and refactored LoggerRegistry.
 Also includes modified (slightly) ThunderBoltAS3 classes for logging to FireBug console.
 
+### History:
+
+Merged from Swiz GitHub mainline v1.0RC... into this fork on 9/25/2010
+
+
+
 ## Building
 
 You can compile the library .swc file using:

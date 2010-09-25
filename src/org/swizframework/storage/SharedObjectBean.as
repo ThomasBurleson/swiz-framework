@@ -30,7 +30,7 @@ package org.swizframework.storage
 		private var so:SharedObject;
 		
 		private var _path:String = "/";
-		private var _name:String;
+		private var _name:String = "swizSharedObject";
 		
 		/**
 		 * @inheritDoc

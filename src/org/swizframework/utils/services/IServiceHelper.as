@@ -14,27 +14,12 @@
  * the License.
  */
 
-package org.swizframework.utils.chain
+package org.swizframework.utils.services
 {
-	import flash.events.IEventDispatcher;
-	
-	public interface IChain
+	import mx.rpc.AsyncToken;
+
+	public interface IServiceHelper
 	{
-		function get position():int;
-		function set position( value:int ):void;
-		
-		function get isComplete():Boolean;
-		
-		function get stopOnError():Boolean;
-		function set stopOnError( value:Boolean ):void;
-		
-		function hasNext():Boolean;
-		function stepComplete():void;
-		function stepError():void;
-		
-		function addStep( step:IChainStep ):IChain;
-		
-		function start():void;
-		function doProceed():void;
+		function executeServiceCall( call:AsyncToken, resultHandler:Function, faultHandler:Function = null, resultHandlerArgs:Array = null ):AsyncToken;
 	}
 }

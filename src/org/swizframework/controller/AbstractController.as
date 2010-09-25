@@ -18,6 +18,7 @@ package org.swizframework.controller
 {
 	import flash.events.IEventDispatcher;
 	import flash.net.URLRequest;
+	import flash.system.LoaderContext;
 	
 	import mx.rpc.AsyncToken;
 	
@@ -59,33 +60,35 @@ package org.swizframework.controller
 		
 		/** Delegates execute service call to Swiz */
 		protected function executeServiceCall( call:AsyncToken, resultHandler:Function,
-											   faultHandler:Function = null, eventArgs:Array = null ):void
+											   faultHandler:Function = null, handlerArgs:Array = null ):void
 		{
 			
 			if( faultHandler == null && _swiz.config.defaultFaultHandler != null )
 				faultHandler = _swiz.config.defaultFaultHandler;
 			
-			call.addResponder( new SwizResponder( resultHandler, faultHandler, eventArgs ) );
+			call.addResponder( new SwizResponder( resultHandler, faultHandler, handlerArgs ) );
 		}
 		
 		/** Delegates execute url request call to Swiz */
 		protected function executeURLRequest( request:URLRequest, resultHandler:Function, faultHandler:Function = null,
 											  progressHandler:Function = null, httpStatusHandler:Function = null,
-											  eventArgs:Array = null ):void
+											  eventArgs:Array = null, useLoader:Boolean = false,
+											  context:LoaderContext = null, urlLoaderDataFormat:String = null,
+											  timeoutSeconds:uint=10, tries:uint=1 ):void
 		{
 			
 			if( faultHandler == null && _swiz.config.defaultFaultHandler != null )
 				faultHandler = _swiz.config.defaultFaultHandler;
 			
-			var swizURLRequest:SwizURLRequest = 
-				new SwizURLRequest( request, resultHandler, faultHandler, progressHandler, httpStatusHandler, eventArgs );
+			var swizURLRequest:SwizURLRequest =
+				new SwizURLRequest( request, resultHandler, faultHandler, progressHandler, httpStatusHandler, eventArgs, useLoader, context, urlLoaderDataFormat, timeoutSeconds, tries );
 		}
 		
 		/** Delegates create command to Swiz */
 		protected function createCommand( delayedCall:Function, args:Array, resultHandler:Function,
-										  faultHandler:Function = null, resultHandlerArgs:Array = null ):AsyncCommandChainStep
+										  faultHandler:Function = null, handlerArgs:Array = null ):AsyncCommandChainStep
 		{
-			return new AsyncCommandChainStep( delayedCall, args, resultHandler, faultHandler, resultHandlerArgs );
+			return new AsyncCommandChainStep( delayedCall, args, resultHandler, faultHandler, handlerArgs );
 		}
 		
 		/** Constructs a dynamic command */

@@ -1,8 +1,25 @@
+/*
+* Copyright 2010 Swiz Framework Contributors
+* 
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License. You may obtain a copy of the License at
+* 
+* http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
+
 package org.swizframework.utils.services
 {
 	import mx.messaging.Channel;
 	import mx.messaging.ChannelSet;
 	import mx.messaging.channels.AMFChannel;
+	import mx.messaging.channels.SecureAMFChannel;
 	
 	import org.swizframework.core.IInitializing;
 
@@ -53,8 +70,13 @@ package org.swizframework.utils.services
 		private function createChannel():void
 		{
 			if (!channelCreated) {
+				
+				var amfChannel:Channel;
 				// create a new AMF Channel with our configuration
-				var amfChannel:Channel = new AMFChannel(CHANNEL_ID, AMF_ENDPOINT);
+				if( PROTOCOL == "https" || AMF_ENDPOINT.indexOf("https") > -1 )
+					amfChannel = new SecureAMFChannel(CHANNEL_ID, AMF_ENDPOINT);
+				else
+					amfChannel = new AMFChannel(CHANNEL_ID, AMF_ENDPOINT);
 				addChannel(amfChannel);
 				channelCreated = true;
 			}

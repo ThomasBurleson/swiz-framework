@@ -30,113 +30,101 @@ package org.swizframework.utils.services
 	
 	public class MockDelegateHelper
 	{
+		public var calls:Dictionary;
+		public var fault:Fault;
+		
 		/**
 		 * If <code>true</code>, a busy cursor is displayed while the mock service is
 		 * executing. The default value is <code>false</code>.
 		 */
-		public var showBusyCursor:Boolean = false;
+		public var showBusyCursor:Boolean;
 		
-		
-		
-		public function MockDelegateHelper( showBusy:Boolean = false ) {
-			showBusyCursor = showBusy;
-		}
-		
-		// ******************************************************************************
-		//  Cursor Methods
-		// ******************************************************************************
-		
-		
-		public function createMockResult( mockData:Object, delay:int = 10 ):AsyncToken {
-			return buildToken(mockData, onResults_mockSend, delay);
-		}
-		
-		public function createMockFault( fault:Fault = null, delay:int = 10 ):AsyncToken {
-			return buildToken(fault, onFault_mockSend, delay);
-		}
-		
-		// ******************************************************************************
-		//  Cursor Methods
-		// ******************************************************************************
-		
-		
-		protected function onResults_mockSend( event:TimerEvent ):void
+		public function MockDelegateHelper( showBusyCursor:Boolean = false )
 		{
-			stopCursor();
-			
-			var token   : AsyncToken = releaseToken(event, onResults_mockSend);
-			var mockData: Object     = ( token.data ) ? token.data : new Object();
-			
-			token.mx_internal::applyResult(ResultEvent.createEvent(mockData, token));
+			this.showBusyCursor = showBusyCursor;
+			calls = new Dictionary();
 		}
 		
-		
-		protected function onFault_mockSend( event:TimerEvent ):void
+		public function createMockResult( mockData:Object, delay:int = 10 ):AsyncToken
 		{
-			stopCursor();
+			var token:AsyncToken = new AsyncToken();
+			token.data = mockData;
 			
-			var token : AsyncToken = releaseToken(event, onFault_mockSend);
-			var fault : Fault      = ( token.data ) ? token.data : null;
+			var timer:Timer = new Timer( delay, 1 );
+			timer.addEventListener( TimerEvent.TIMER, sendMockResult );
+			timer.start();
 			
-			token.mx_internal::applyFault(FaultEvent.createEvent(fault, token));
-		}
-		
-		
-		// ******************************************************************************
-		//  Token Construction/Cleanup
-		// ******************************************************************************
-		
-		
-		private function buildToken(data:Object, callback:Function, delay:int=10):AsyncToken {
-			startCursor();
+			calls[ timer ] = token;
 			
-			var token: AsyncToken = new AsyncToken();
-			var timer: Timer      = new Timer( delay, 1 );
-			
-				timer.addEventListener( TimerEvent.TIMER_COMPLETE, callback );
-				timer.start();
-				
-				token.data     = data;
-				calls[ timer ] = token;
-			
-			return token;
-		}
-		
-		private function releaseToken(event:TimerEvent, callBack:Function):AsyncToken {
-			var token : AsyncToken = null; 
-			var timer : Timer      = Timer( event.target );
-			
-			if (timer != null) {
-				timer.removeEventListener( TimerEvent.TIMER_COMPLETE, callBack );
-			
-				token = calls[ timer ];
-				delete calls[ timer ];
+			if( showBusyCursor )
+			{
+				CursorManager.setBusyCursor();
 			}
 			
 			return token;
 		}
 		
-		// ******************************************************************************
-		//  Cursor Methods
-		// ******************************************************************************
-		
-		private function startCursor():void {
-			if( showBusyCursor ) {
-				CursorManager.setBusyCursor();
-			}			
-		}
-		
-		private function stopCursor():void {
+		protected function sendMockResult( event:TimerEvent ):void
+		{
 			if( showBusyCursor )
 			{
 				CursorManager.removeBusyCursor();
-			}			
-		}
-
-		// ******************************************************************************
-		//  Cache for tokens and callbacks
-		// ******************************************************************************
+			}
+			
+			var timer:Timer = Timer( event.target );
+			timer.removeEventListener( TimerEvent.TIMER, sendMockResult );
+			
+			if( calls[ timer ] is AsyncToken )
+			{
+				var token:AsyncToken = AsyncToken( calls[ timer ] );
+				delete calls[ timer ];
 				
-		private var calls:Dictionary = new Dictionary();
+				var mockData:Object = ( token.data ) ? token.data : new Object();
+				token.mx_internal::applyResult(ResultEvent.createEvent(mockData, token));
+			}
+			
+			timer = null;
+		}
+		
+		public function createMockFault( fault:Fault = null, delay:int = 10 ):AsyncToken
+		{
+			var token:AsyncToken = new AsyncToken();
+			token.data = fault;
+			
+			var timer:Timer = new Timer( delay, 1 );
+			timer.addEventListener( TimerEvent.TIMER, sendMockFault );
+			timer.start();
+			
+			calls[ timer ] = token;
+			
+			if( showBusyCursor )
+			{
+				CursorManager.setBusyCursor();
+			}
+			
+			return token;
+		}
+		
+		protected function sendMockFault( event:TimerEvent ):void
+		{
+			if( showBusyCursor )
+			{
+				CursorManager.removeBusyCursor();
+			}
+			
+			var timer:Timer = Timer( event.target );
+			timer.removeEventListener( TimerEvent.TIMER, sendMockFault );
+			
+			if( calls[ timer ] is AsyncToken )
+			{
+				var token:AsyncToken = calls[ timer ];
+				delete calls[ timer ];
+				
+				var fault:Fault = ( token.data ) ? token.data : null;
+				token.mx_internal::applyFault(FaultEvent.createEvent(fault, token));
+			}
+			
+			timer = null;
+		}
 	}
 }

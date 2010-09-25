@@ -21,6 +21,7 @@ package org.swizframework.metadata
 	
 	import org.swizframework.reflection.MetadataHostMethod;
 	import org.swizframework.reflection.MethodParameter;
+	import org.swizframework.utils.PropertyUtils;
 	
 	/**
 	 * Represents a deferred request for mediation.
@@ -143,9 +144,10 @@ package org.swizframework.metadata
 		{
 			var args:Array = [];
 			
-			for each( var property:String in properties )
-			{
-				args[ args.length ] = event[ property ];
+			for each( var property:String in properties ) {
+				// Caution, the property may be a chain; e.g. "node.data.serialNumber"
+				
+				args[ args.length ] = PropertyUtils.getChainValue(event, property);
 			}
 			
 			return args;

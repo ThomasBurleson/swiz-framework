@@ -16,27 +16,25 @@
 
 package org.swizframework.utils.chain
 {
-	public class CommandChain extends AbstractChain implements IChain
+	public class CommandChain extends BaseCompositeChain
 	{
 		public function CommandChain( mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true )
 		{
 			super( mode, stopOnError );
 		}
 		
-		public function addCommand( command:IChainStep ):CommandChain {
-			addStep(command);
+		public function addCommand( command:CommandChainStep ):CommandChain
+		{
+			addStep( command );
 			return this;
 		}
 		
-		/**
-		 *
-		 */
-		public function doProceed():void {
-			var currentStep : * = steps[ position ];
-			
-			if      (currentStep is IAutonomousChainStep )		IAutonomousChainStep ( currentStep ).doProceed();
-			else if (currentStep is CommandChainStep)			CommandChainStep	 ( currentStep ).execute();
-			else if (currentStep is AbstractChain)				AbstractChain		 ( currentStep ).start();
+		override public function doProceed():void
+		{
+			if( currentStep is CommandChainStep )
+				CommandChainStep( currentStep ).doProceed();
+			else
+				super.doProceed();
 		}
 	}
 }

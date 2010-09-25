@@ -21,6 +21,7 @@ package org.swizframework.processors
 	import mx.binding.utils.BindingUtils;
 	import mx.binding.utils.ChangeWatcher;
 	import mx.logging.ILogger;
+	import mx.utils.StringUtil;
 	import mx.utils.UIDUtil;
 	
 	import org.swizframework.core.Bean;
@@ -29,6 +30,7 @@ package org.swizframework.processors
 	import org.swizframework.reflection.MetadataHostClass;
 	import org.swizframework.reflection.MetadataHostMethod;
 	import org.swizframework.reflection.MethodParameter;
+	import org.swizframework.utils.PropertyUtils;
 	import org.swizframework.utils.logging.SwizLogger;
 	
 	/**
@@ -119,12 +121,12 @@ package org.swizframework.processors
 				}
 				
 				// this is a view added to the display list or a new bean being processed
-				var destObject:Object = ( injectTag.destination == null ) ? bean.source : getDestinationObject( bean.source, injectTag.destination );
+				var destObject:Object = ( injectTag.destination == null ) ? bean.source : PropertyUtils.getDestinationObject( bean.source, injectTag.destination );
 				// name of property that will be bound to a source value
 				var destPropName:* = getDestinationPropertyName( injectTag );
 				
 				var chain:String = injectTag.source.substr( injectTag.source.indexOf( "." ) + 1 );
-				var bind:Boolean = injectTag.bind && ChangeWatcher.canWatch( namedBean.source, chain ) && !( destPropName is QName );
+				var bind:Boolean = canWatch(injectTag) && !( destPropName is QName );
 				
 				// if injecting by name simply assign the bean's current value
 				// as there is no context to create a binding
@@ -135,7 +137,7 @@ package org.swizframework.processors
 				else if( !bind )
 				{
 					// if tag specified no binding or property is not bindable, do simple assignment
-					var sourceObject:Object = getDestinationObject( namedBean.source, chain );
+					var sourceObject:Object = PropertyUtils.getDestinationObject( namedBean.source, chain );
 					setDestinationValue( injectTag, bean, sourceObject[ injectTag.source.split( "." ).pop() ] );
 					
 					if( destPropName is QName && injectTag.bind == true )
@@ -148,12 +150,14 @@ package org.swizframework.processors
 				else
 				{
 					// bind to bean property
-					addPropertyBinding( destObject, destPropName, namedBean.source, injectTag.source.split( "." ).slice( 1 ), injectTag.twoWay );
+					var sourceChain : Array = injectTag.source.split( "." ).slice( 1 );
+					addPropertyBinding( destObject, destPropName, namedBean.source, sourceChain , injectTag.twoWay );
 				}
 			}
 			
 			logger.debug( "InjectProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() );
 		}
+		
 		
 		/**
 		 * Remove Inject
@@ -184,28 +188,11 @@ package org.swizframework.processors
 		/**
 		 *
 		 */
-		protected function getDestinationObject( destObject:Object, chainString:String ):Object
-		{
-			var arr:Array = chainString.split( "." );
-			var dest:Object = destObject;
-			while( arr.length > 1 )
-				dest = dest[ arr.shift() ];
-			return dest;
-		}
-		
-		/**
-		 *
-		 */
 		protected function getDestinationPropertyName( injectTag:InjectMetadataTag ):*
 		{
-			if( injectTag.destination == null )
-			{
-				return injectTag.host.name;
-			}
-			else
-			{
-				return injectTag.destination.split( "." ).pop();
-			}
+			// Caution the destination may be a propertyChain
+		
+			return injectTag.destination ? PropertyUtils.getDestinationKey(injectTag.destination) : injectTag.host.name;
 		}
 		
 		/**
@@ -275,7 +262,7 @@ package org.swizframework.processors
 		{
 			var setterInjection:Boolean = injectTag.host is MetadataHostMethod;
 			
-			var destObject:Object = ( injectTag.destination == null ) ? bean.source : getDestinationObject( bean.source, injectTag.destination );
+			var destObject:Object = ( injectTag.destination == null ) ? bean.source : PropertyUtils.getDestinationObject( bean.source, injectTag.destination );
 			var destPropName:* = getDestinationPropertyName( injectTag );
 			
 			if( setterInjection )
@@ -358,11 +345,10 @@ package org.swizframework.processors
 				var sourcePropName:String = sourcePropertyChain[ 0 ];
 				
 				// create the reverse binding where the view/new bean is the source
-				// TODO: store this binding too
 				if( ChangeWatcher.canWatch( destObject, destPropName ) )
 				{
 					// if a destination was provided we can use it as the host chain value
-					BindingUtils.bindProperty( sourceObject, sourcePropName, destObject, destPropName );
+					injectByProperty[ uid ].push( BindingUtils.bindProperty( sourceObject, sourcePropName, destObject, destPropName ) );
 				}
 				else
 				{
@@ -376,12 +362,59 @@ package org.swizframework.processors
 		 */
 		protected function removePropertyBinding( destination:Bean, source:Bean, injectTag:InjectMetadataTag ):void
 		{
-			var uid:String = UIDUtil.getUID( destination.source );
-			for each( var cw:ChangeWatcher in injectByProperty[ uid ] )
-			{
-				cw.unwatch();
+			var destObject:Object = ( injectTag.destination == null ) ? destination.source : PropertyUtils.getDestinationObject( destination.source, injectTag.destination );
+			var uid:String = UIDUtil.getUID( destObject );
+			for each( var cw:ChangeWatcher in injectByProperty[ uid ] ) {
+				if (cw != null) cw.unwatch();
 			}
 			delete injectByProperty[ uid ];
+		}
+
+	
+		/**
+		 * Check if the source property chain is bindable, if the chain path is more than one level deep;
+		 * then it is a "property chain" that must be split by the '.' delimiters. 
+		 * 
+		 * if (source == "networkModel.topology.state.layout") then 
+		 *     source    			== networkModel
+		 *     sourcePropertyChain  == [ 'topology', 'state', 'layout' ]
+		 *  
+		 * @param injectTag
+		 * 
+		 * @return Boolean true if the full property chain is bindable 
+		 * 
+		 */
+		private function canWatch(injectTag:InjectMetadataTag):Boolean {
+			var results     : Boolean = injectTag.bind;
+			if (results == true) {
+				var sourceChain	: Array  = injectTag.source.split('.');
+				var path        : String = sourceChain[0];
+				var name		: String = sourceChain[0];
+				var source		: Object  = getBeanByName( name ).source;
+				
+				// Deepscan to check all paths of source chain for bindability
+				for each (var property:String in sourceChain.slice( 1 )) {
+					
+					// Descend down the source chain to the next level
+					results = results && ChangeWatcher.canWatch(source, property);
+					
+					if (source.hasOwnProperty(property)) {
+						source  = source[property];
+						name    = property;
+						path   += "." + property;
+					}								 
+					
+					if (source == null) {
+						logger.warn( "InjectProcessor::canWatch() {0} is null.", path);
+						break;
+					} else if (results == false) {
+						logger.debug( "InjectProcessor::canWatch() {0}.{1} is not bindable!", name, property);
+						break;
+					} 
+				}
+			}
+			
+			return results; 
 		}
 	}
 }
