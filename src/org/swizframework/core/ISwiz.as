@@ -88,7 +88,7 @@ package org.swizframework.core
 		function get parentSwiz():ISwiz;
 		function set parentSwiz( parentSwiz:ISwiz ):void;
 		
-		[ArrayElementType( "mx.logging.ILoggingTarget" )]
+		[ArrayElementType( "org.swizframework.utils.logging.AbstractSwizLoggingTarget" )]
 		
 		/**
 		 * Logging targets
@@ -112,7 +112,7 @@ package org.swizframework.core
 		
 		/**
 		 * Register a new window with Swiz so that its metadata can be processed.
-		 */
+		 */ 
 		function registerWindow( window:IEventDispatcher, windowSwiz:ISwiz = null ):void;
 	}
 }

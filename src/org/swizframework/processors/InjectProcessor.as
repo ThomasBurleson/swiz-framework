@@ -20,7 +20,6 @@ package org.swizframework.processors
 	
 	import mx.binding.utils.BindingUtils;
 	import mx.binding.utils.ChangeWatcher;
-	import mx.logging.ILogger;
 	import mx.utils.StringUtil;
 	import mx.utils.UIDUtil;
 	
@@ -49,7 +48,7 @@ package org.swizframework.processors
 		// protected properties
 		// ========================================
 		
-		protected var logger:ILogger = SwizLogger.getLogger( this );
+		protected var logger:SwizLogger = SwizLogger.getLogger( this );
 		protected var injectByProperty:Dictionary = new Dictionary();
 		protected var injectByName:Object = {};
 		protected var injectByType:Object = {};
@@ -90,7 +89,6 @@ package org.swizframework.processors
 		override public function setUpMetadataTag( metadataTag:IMetadataTag, bean:Bean ):void
 		{
 			var injectTag:InjectMetadataTag = metadataTag as InjectMetadataTag;
-			var beanNotFound:Boolean = false;
 			
 			if( injectTag.name == AUTOWIRE )
 				logger.warn( "[Autowire] has been deprecated in favor of [Inject]. Please update {0} accordingly.", bean );

@@ -19,19 +19,10 @@
 	
 	<!-- utils package -->
 	<component class="org.swizframework.utils.logging.SwizLogger" />
+	<component class="org.swizframework.utils.logging.SwizTraceTarget" />
 	<component class="org.swizframework.utils.services.ServiceHelper" />
 	<component class="org.swizframework.utils.services.ChannelSetHelper" />
 	<component class="org.swizframework.utils.services.MockDelegateHelper" />
 	<component class="org.swizframework.utils.services.URLRequestHelper" />
 	
-	<!-- Custom Processors -->
-	<component class="ext.swizframework.processors.LogProcessor" />
-	<component class="ext.swizframework.processors.DeepLinkProcessor" />
-	
-	<!-- Custom Utilities -->
-	<component class="ext.swizframework.utils.AsyncInterceptor" />
-	<component class="ext.swizframework.utils.SWFAddressManager" />
-	
-	<component class="org.osflash.thunderbolt.ThunderBoltTarget" />
-
 </componentPackage>

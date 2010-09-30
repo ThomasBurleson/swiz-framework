@@ -43,7 +43,7 @@ package org.swizframework.core
 		// protected properties
 		// ========================================
 		
-		protected var logger:ILogger = SwizLogger.getLogger( this );
+		protected var logger:SwizLogger = SwizLogger.getLogger( this );
 		
 		protected const ignoredClasses:RegExp = /^mx\.|^spark\.|^flash\.|^fl\./;
 		

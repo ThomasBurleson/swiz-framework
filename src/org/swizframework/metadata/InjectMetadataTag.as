@@ -31,7 +31,7 @@ package org.swizframework.metadata
 		// protected properties
 		// ========================================
 		
-		protected var logger:ILogger = SwizLogger.getLogger( this );
+		protected var logger:SwizLogger = SwizLogger.getLogger( this );
 		
 		/**
 		 * Backing variable for read-only <code>source</code> property.
