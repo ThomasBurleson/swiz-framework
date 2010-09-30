@@ -5,11 +5,9 @@ Also includes modified (slightly) ThunderBoltAS3 classes for logging to FireBug 
 
 ### History:
 
-Moved custom extensions to [swiz_extensions_2](http://github.com/ThomasBurleson/swiz-extensions_2) repository
-Integrated mainline Swiz features for SwizLogger   (9/30/2010)
-
-Merged from Swiz GitHub mainline v1.0RC... into this fork on 9/25/2010
-
+- 9/30/2010: Moved custom extensions to [swiz_extensions_2](http://github.com/ThomasBurleson/swiz-extensions_2) repository
+- 9/30/2010: Integrated mainline Swiz features for SwizLogger  
+- 9/25/2010: Merged from Swiz GitHub mainline v1.0RC... into this fork on 9/25/2010
 
 
 ## Building
