@@ -25,8 +25,6 @@ package org.swizframework.core
 	import flash.utils.Dictionary;
 	import flash.utils.getQualifiedClassName;
 	
-	import mx.logging.ILogger;
-	
 	import org.swizframework.events.BeanEvent;
 	import org.swizframework.processors.IBeanProcessor;
 	import org.swizframework.processors.IMetadataProcessor;

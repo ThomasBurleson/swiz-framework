@@ -64,6 +64,15 @@
 		</fileset>
 		<property name="src.include.fileset" refid="src.include.fileset" />
 
+		<!-- Convert the test files into a compiler friendly format. -->
+		<pathconvert property="src.include.classes" pathsep=" " refid="src.include.fileset">
+		        <compositemapper>
+		                <chainedmapper>
+		                        <globmapper from="${src.loc}/*" to="*" handledirsep="true" />
+		                        <mapper type="package" from="*.as" to="*" />
+		                </chainedmapper>
+		        </compositemapper>
+		</pathconvert>
 				
 		<compc output="${bin.loc}/${swiz.name}.swc" include-classes="${src.include.classes}">
 			<source-path path-element="${src.loc}" />
@@ -93,9 +102,11 @@
 	
 	<target name="asdoc" depends="init" description="Generate ASDoc documentation">
 		<java jar="${FLEX_HOME}/lib/asdoc.jar" dir="${FLEX_HOME}/frameworks" fork="true" failonerror="true">
-			<!--<arg line="-doc-sources ${src.loc}"/>-->
-			<arg line="-namespace ${swiz.namespace} ${src.loc}/manifest.xml " />
-			<arg line="-doc-namespaces ${swiz.namespace}" />
+			<arg line="-doc-sources ${src.loc}"/>
+			
+			<!-- <arg line="-namespace ${swiz.namespace} ${src.loc}/manifest.xml " />
+			<arg line="-doc-namespaces ${swiz.namespace}" /> -->
+			
 			<arg line="-source-path ${src.loc}"/>
 			<arg line="-output ${docs.loc}"/>
 			<arg line="-window-title 'Swiz ${swiz.version}'"/>
