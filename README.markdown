@@ -7,7 +7,7 @@ Support for property chains in custom process tags.
 - [Mediate(event="VisualizationEvent.NODE_SELECTED", properties="node.data.serialNumber, autoFit"] 
 - [Inject(source="networkModel.currentTopology.manuallyPlacedNodes", bind="true")]
 
-See [[Wiki docs|MetadataProcessor-Enhancements]] for details.
+See [Wiki docs](http://github.com/ThomasBurleson/swiz-framework/wiki/MetadataProcessor-Enhancements) for details.
 
 ### History:
 
