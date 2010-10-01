@@ -2,8 +2,12 @@ This forked repository contains [customized extensions](http://wiki.github.com/T
 
 ### Changes
 
-- [Mediate] supports property chains
-- [Inject] supports poperty chains and two-way binding
+Support for property chains in custom process tags.
+
+- [Mediate(event="VisualizationEvent.NODE_SELECTED", properties="node.data.serialNumber, autoFit"] 
+- [Inject(source="networkModel.currentTopology.manuallyPlacedNodes", bind="true")]
+
+See [[Wiki docs|MetadataProcessor-Enhancements]] for details.
 
 ### History:
 
