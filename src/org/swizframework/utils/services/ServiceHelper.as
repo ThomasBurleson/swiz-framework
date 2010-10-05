@@ -26,6 +26,9 @@ package org.swizframework.utils.services
 	{
 		protected var _swiz:ISwiz;
 
+		public function get swiz(): ISwiz {
+			return _swiz;
+		}
 		public function set swiz( swiz:ISwiz ):void
 		{
 			_swiz = swiz;

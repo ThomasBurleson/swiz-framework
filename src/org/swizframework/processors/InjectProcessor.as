@@ -368,7 +368,6 @@ package org.swizframework.processors
 			delete injectByProperty[ uid ];
 		}
 
-	
 		/**
 		 * Check if the source property chain is bindable, if the chain path is more than one level deep;
 		 * then it is a "property chain" that must be split by the '.' delimiters. 
@@ -384,35 +383,44 @@ package org.swizframework.processors
 		 */
 		private function canWatch(injectTag:InjectMetadataTag):Boolean {
 			var results     : Boolean = injectTag.bind;
-			if (results == true) {
+			
+			if (injectTag.bind == true) {
+				
 				var sourceChain	: Array  = injectTag.source.split('.');
 				var path        : String = sourceChain[0];
 				var name		: String = sourceChain[0];
-				var source		: Object  = getBeanByName( name ).source;
-				
+				var source		: Object = getBeanByName( name ).source;
+
 				// Deepscan to check all paths of source chain for bindability
 				for each (var property:String in sourceChain.slice( 1 )) {
-					
-					// Descend down the source chain to the next level
-					results = results && ChangeWatcher.canWatch(source, property);
-					
-					if (source.hasOwnProperty(property)) {
-						source  = source[property];
-						name    = property;
-						path   += "." + property;
-					}								 
-					
-					if (source == null) {
-						logger.warn( "InjectProcessor::canWatch() {0} is null.", path);
+					if (source && source.hasOwnPoperty(property)) {
+						
+						// Descend down the source chain to the next level
+						if (ChangeWatcher.canWatch(source, property)) {
+							
+							source  = source[property];
+							name    = property;
+							path   += "." + property;
+							
+						} else {
+							logger.debug( "InjectProcessor::canWatch() {0}.{1} is not bindable!", name, property);	
+							results = false;
+							
+							break;							
+						}
+						
+					} else {
+						logger.warn( "InjectProcessor::canWatch() {0}.{1} is null.", path, property);							
+						results = false;
+						
 						break;
-					} else if (results == false) {
-						logger.debug( "InjectProcessor::canWatch() {0}.{1} is not bindable!", name, property);
-						break;
-					} 
+					}					
 				}
+				
 			}
-			
+
 			return results; 
 		}
-	}
+
+	}	
 }
