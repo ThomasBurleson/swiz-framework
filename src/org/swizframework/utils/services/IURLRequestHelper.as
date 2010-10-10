@@ -9,6 +9,6 @@ package org.swizframework.utils.services
 									progressHandler:Function = null, httpStatusHandler:Function = null,
 									eventArgs:Array = null, useLoader:Boolean = false,
 									context:LoaderContext = null, urlLoaderDataFormat:String = null,
-									timeoutSeconds:uint=10, tries:uint=1 ):void
+									timeoutSeconds:uint=10, tries:uint=1 ):URLRequest
 	}
 }

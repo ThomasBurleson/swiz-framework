@@ -20,7 +20,6 @@ package org.swizframework.processors
 	
 	import mx.binding.utils.BindingUtils;
 	import mx.binding.utils.ChangeWatcher;
-	import mx.utils.StringUtil;
 	import mx.utils.UIDUtil;
 	
 	import org.swizframework.core.Bean;
@@ -31,6 +30,11 @@ package org.swizframework.processors
 	import org.swizframework.reflection.MethodParameter;
 	import org.swizframework.utils.PropertyUtils;
 	import org.swizframework.utils.logging.SwizLogger;
+	import org.swizframework.utils.services.IServiceHelper;
+	import org.swizframework.utils.services.IURLRequestHelper;
+	import org.swizframework.utils.services.MockDelegateHelper;
+	import org.swizframework.utils.services.ServiceHelper;
+	import org.swizframework.utils.services.URLRequestHelper;
 	
 	/**
 	 * Inject Processor
@@ -50,10 +54,9 @@ package org.swizframework.processors
 		
 		protected var logger:SwizLogger = SwizLogger.getLogger( this );
 		protected var injectByProperty:Dictionary = new Dictionary();
-		protected var injectByName:Object = {};
-		protected var injectByType:Object = {};
-		protected var queueByName:Object = {};
-		protected var queueByType:Array = [];
+		protected var sharedServiceHelper:IServiceHelper;
+		protected var sharedURLRequestHelper:IURLRequestHelper;
+		protected var sharedMockDelegateHelper:MockDelegateHelper;
 		
 		// ========================================
 		// public properties
@@ -238,6 +241,33 @@ package org.swizframework.processors
 			}
 			else
 			{
+				// helper classes can be created on demand so users don't have to declare them
+				switch( targetType )
+				{
+					case ServiceHelper:
+					case IServiceHelper:
+						if( sharedServiceHelper == null )
+							sharedServiceHelper = new ServiceHelper();
+						
+						setDestinationValue( injectTag, bean, sharedServiceHelper );
+						return;
+						
+					case URLRequestHelper:
+					case IURLRequestHelper:
+						if( sharedURLRequestHelper == null )
+							sharedURLRequestHelper = new URLRequestHelper();
+						
+						setDestinationValue( injectTag, bean, sharedURLRequestHelper );
+						return;
+						
+					case MockDelegateHelper:
+						if( sharedMockDelegateHelper == null )
+							sharedMockDelegateHelper = new MockDelegateHelper();
+						
+						setDestinationValue( injectTag, bean, sharedMockDelegateHelper );
+						return;
+				}
+				
 				if( injectTag.required )
 					throw new Error("InjectProcessor Error: bean of type " + targetType.toString() + " not found!" );
 				else
