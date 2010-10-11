@@ -423,7 +423,7 @@ package org.swizframework.processors
 
 				// Deepscan to check all paths of source chain for bindability
 				for each (var property:String in sourceChain.slice( 1 )) {
-					if (source && source.hasOwnPoperty(property)) {
+					if (source && source.hasOwnProperty(property)) {
 						
 						// Descend down the source chain to the next level
 						if (ChangeWatcher.canWatch(source, property)) {
