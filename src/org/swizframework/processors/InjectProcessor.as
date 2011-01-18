@@ -23,6 +23,7 @@ package org.swizframework.processors
 	import mx.utils.UIDUtil;
 	
 	import org.swizframework.core.Bean;
+	import org.swizframework.core.ISwizAware;
 	import org.swizframework.metadata.InjectMetadataTag;
 	import org.swizframework.reflection.IMetadataTag;
 	import org.swizframework.reflection.MetadataHostClass;
@@ -159,7 +160,6 @@ package org.swizframework.processors
 			logger.debug( "InjectProcessor set up {0} on {1}", metadataTag.toString(), bean.toString() );
 		}
 		
-		
 		/**
 		 * Remove Inject
 		 */
@@ -230,7 +230,6 @@ package org.swizframework.processors
 			var targetType:Class = ( setterInjection ) ? MethodParameter( MetadataHostMethod( injectTag.host ).parameters[ 0 ] ).type : injectTag.host.type;
 			if( targetType == null && injectTag.host is MetadataHostClass )
 			{
-				// targetType = getDefinitionByName( injectTag.host.name ) as Class;
 				targetType = swiz.domain.getDefinition( injectTag.host.name ) as Class;
 			}
 			var typedBean:Bean = getBeanByType( targetType );
@@ -247,7 +246,10 @@ package org.swizframework.processors
 					case ServiceHelper:
 					case IServiceHelper:
 						if( sharedServiceHelper == null )
+						{
 							sharedServiceHelper = new ServiceHelper();
+							ISwizAware( sharedServiceHelper ).swiz = swiz;
+						}
 						
 						setDestinationValue( injectTag, bean, sharedServiceHelper );
 						return;
@@ -255,7 +257,10 @@ package org.swizframework.processors
 					case URLRequestHelper:
 					case IURLRequestHelper:
 						if( sharedURLRequestHelper == null )
+						{
 							sharedURLRequestHelper = new URLRequestHelper();
+							ISwizAware( sharedURLRequestHelper ).swiz = swiz;
+						}
 						
 						setDestinationValue( injectTag, bean, sharedURLRequestHelper );
 						return;

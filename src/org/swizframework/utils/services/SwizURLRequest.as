@@ -48,6 +48,9 @@ package org.swizframework.utils.services
 	{
 		public static const LOAD_TIMEOUT: String = "loadTimeout";
 		
+		
+		public var loader : Object = null;
+		
 		/**
 		 *
 		 * @param request
@@ -109,7 +112,7 @@ package org.swizframework.utils.services
 				}
 			}
 			
-			var dispatcher:IEventDispatcher, loader:Object, fails:int = 0, timer:Timer;
+			var dispatcher:IEventDispatcher, fails:int = 0, timer:Timer;
 			if (timeoutSeconds)
 			{
 				tries ||= 1;
@@ -119,12 +122,12 @@ package org.swizframework.utils.services
 			
 			if (useLoader)
 			{
-				loader = new Loader();
+				this.loader = new Loader();
 				dispatcher = loader.contentLoaderInfo;
 			}
 			else
 			{
-				loader = new URLLoader();
+				this.loader = new URLLoader();
 				dispatcher = loader as IEventDispatcher;
 				if (urlLoaderDataFormat)
 				{

@@ -22,8 +22,9 @@ package org.swizframework.core
 	import flash.events.EventDispatcher;
 	import flash.events.EventPhase;
 	import flash.system.ApplicationDomain;
-	import flash.utils.Dictionary;
 	import flash.utils.getQualifiedClassName;
+	
+	import mx.modules.Module;
 	
 	import org.swizframework.events.BeanEvent;
 	import org.swizframework.processors.IBeanProcessor;
@@ -53,6 +54,10 @@ package org.swizframework.core
 		protected var _parentBeanFactory:IBeanFactory;
 		
 		protected var _beans:Array = [];
+		
+		protected var removedDisplayObjects:Array = [];
+		
+		protected var isListeningForEnterFrame:Boolean = false;
 		
 		// ========================================
 		// public properties
@@ -382,7 +387,7 @@ package org.swizframework.core
 					if( existingBean )
 						logger.warn( "{0} already exists as a bean. Ignoring ADD_BEAN request.", event.source.toString() );
 					else
-						addBean( createBeanFromSource( event.source, event.beanName ) );
+						addBean( constructBean( event.source, event.beanName, swiz.domain ) );
 					break;
 				
 				case BeanEvent.SET_UP_BEAN:
@@ -392,14 +397,14 @@ package org.swizframework.core
 						else
 							setUpBean( existingBean );
 					else
-						setUpBean( createBeanFromSource( event.source, event.beanName ) );
+						setUpBean( constructBean( event.source, event.beanName, swiz.domain ) );
 					break;
 				
 				case BeanEvent.TEAR_DOWN_BEAN:
 					if( existingBean )
 						tearDownBean( existingBean );
 					else
-						logger.warn( "Could not find bean with {0} as its source. Ignoring TEAR_DOWN_BEAN request.", event.source.toString() );
+						tearDownBean( constructBean( event.source, null, swiz.domain ) );
 					break;
 				
 				case BeanEvent.REMOVE_BEAN:
@@ -449,7 +454,22 @@ package org.swizframework.core
 				return;
 			
 			if( isPotentialInjectionTarget( event.target ) )
-			{
+			{				
+				var i:int = removedDisplayObjects.indexOf( event.target );
+				
+				if( i != -1 )
+				{
+					removedDisplayObjects.splice( i, 1 );
+					
+					if( removedDisplayObjects.length == 0 )
+					{
+						swiz.dispatcher.removeEventListener( Event.ENTER_FRAME, enterFrameHandler );
+						isListeningForEnterFrame = false;
+					}
+					
+					return;
+				}
+				
 				SwizManager.setUp( DisplayObject( event.target ) );
 			}
 		}
@@ -460,7 +480,7 @@ package org.swizframework.core
 		protected function setUpEventHandlerSysMgr( event:Event ):void
 		{
 			// make sure the view is not a descendant of the main dispatcher
-			// if its not, it is a popup, so we pass it along for processing
+			// if it's not, it is a popup, so we pass it along for processing
 			if( !Sprite( swiz.dispatcher ).contains( DisplayObject( event.target ) ) )
 			{
 				setUpEventHandler( event );
@@ -475,9 +495,37 @@ package org.swizframework.core
 			if( event.target is ITearDownValidator && !( ITearDownValidator( event.target ).allowTearDown() ) )
 				return;
 			
-			SwizManager.tearDown( DisplayObject( event.target ) );
+			if( SwizManager.wiredViews[event.target] || isPotentialInjectionTarget( event.target ) || event.target is Module )
+			{
+				addRemovedDisplayObject( DisplayObject( event.target ) );
+			}
 		}
-
+		
+		protected function addRemovedDisplayObject( displayObject:DisplayObject ):void
+		{
+			if( removedDisplayObjects.indexOf( displayObject ) == -1 )
+				removedDisplayObjects.push( displayObject );
+			
+			if( ! isListeningForEnterFrame )
+			{
+				swiz.dispatcher.addEventListener( Event.ENTER_FRAME, enterFrameHandler, false, 0, true );
+				isListeningForEnterFrame = true;
+			}
+		}
+		
+		protected function enterFrameHandler( event:Event ):void
+		{
+			swiz.dispatcher.removeEventListener( Event.ENTER_FRAME, enterFrameHandler );
+			isListeningForEnterFrame = false;
+			
+			var displayObject:DisplayObject = DisplayObject( removedDisplayObjects.shift() );
+			
+			while ( displayObject )
+			{
+				SwizManager.tearDown( displayObject );
+				displayObject = DisplayObject( removedDisplayObjects.shift() );
+			}
+		}
 		
 		// ========================================
 		// static methods

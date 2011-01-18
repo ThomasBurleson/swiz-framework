@@ -1,6 +1,7 @@
 package org.swizframework.utils.services
 {
 	import flash.net.URLRequest;
+	import flash.net.URLLoader;
 	import flash.system.LoaderContext;
 
 	public interface IURLRequestHelper
@@ -9,6 +10,6 @@ package org.swizframework.utils.services
 									progressHandler:Function = null, httpStatusHandler:Function = null,
 									eventArgs:Array = null, useLoader:Boolean = false,
 									context:LoaderContext = null, urlLoaderDataFormat:String = null,
-									timeoutSeconds:uint=10, tries:uint=1 ):URLRequest
+									timeoutSeconds:uint=10, tries:uint=1 ):URLLoader
 	}
 }

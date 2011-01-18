@@ -14,13 +14,14 @@
  * the License.
  */
 
-package org.swizframework.metadata
+package org.swizframework.utils.event
 {
 	import flash.events.Event;
 	import flash.utils.getQualifiedClassName;
 	
 	import mx.rpc.AsyncToken;
 	
+	import org.swizframework.metadata.EventHandlerMetadataTag;
 	import org.swizframework.reflection.MetadataHostMethod;
 	import org.swizframework.reflection.MethodParameter;
 	import org.swizframework.utils.PropertyUtils;
@@ -31,7 +32,7 @@ package org.swizframework.metadata
 	/**
 	 * Represents a deferred request for mediation.
 	 */
-	public class Mediator
+	public class EventHandler
 	{
 		// ========================================
 		// protected properties
@@ -40,7 +41,7 @@ package org.swizframework.metadata
 		/**
 		 * Backing variable for <code>metadata</code> property.
 		 */
-		protected var _metadataTag:MediateMetadataTag;
+		protected var _metadataTag:EventHandlerMetadataTag;
 		
 		/**
 		 * Backing variable for <code>method</code> property.
@@ -57,15 +58,15 @@ package org.swizframework.metadata
 		// ========================================
 		
 		/**
-		 * The corresponding [Mediate] tag.
+		 * The corresponding [EventHandler] tag.
 		 */
-		public function get metadataTag():MediateMetadataTag
+		public function get metadataTag():EventHandlerMetadataTag
 		{
 			return _metadataTag;
 		}
 		
 		/**
-		 * The function decorated with the [Mediate] tag.
+		 * The function decorated with the [EventHandler] tag.
 		 */
 		public function get method():Function
 		{
@@ -73,7 +74,7 @@ package org.swizframework.metadata
 		}
 		
 		/**
-		 * The Event class associated with the [Mediate] tag's event type expression (if applicable).
+		 * The Event class associated with the [EventHandler] tag's event type expression (if applicable).
 		 */
 		public function get eventClass():Class
 		{
@@ -87,7 +88,7 @@ package org.swizframework.metadata
 		/**
 		 * Constructor
 		 */
-		public function Mediator( metadataTag:MediateMetadataTag, method:Function, eventClass:Class )
+		public function EventHandler( metadataTag:EventHandlerMetadataTag, method:Function, eventClass:Class )
 		{
 			_metadataTag = metadataTag;
 			_method = method;
@@ -99,11 +100,11 @@ package org.swizframework.metadata
 		// ========================================
 		
 		/**
-		 * Mediate
+		 * HandleEvent
 		 *
-		 * @param event The Event to mediate.
+		 * @param event The Event to handle.
 		 */
-		public function mediate( event:Event ):void
+		public function handleEvent( event:Event ):void
 		{
 			// ignore if the event types do not match
 			if( ( eventClass != null ) && ! ( event is eventClass ) )
@@ -125,10 +126,10 @@ package org.swizframework.metadata
 			}
 			else
 			{
-				throw new Error( "Unable to mediate event: " + metadataTag.host.name + "() requires " + getRequiredParameterCount() + " parameters, and no properties were specified." );
+				throw new Error( "Unable to handle event: " + metadataTag.host.name + "() requires " + getRequiredParameterCount() + " parameters, and no properties were specified." );
 			}
 			
-			if ( event is IAsynchronousEvent )
+			if( event is IAsynchronousEvent && IAsynchronousEvent( event ).step != null )
 			{
 				if( result is IAsynchronousOperation )
 					IAsynchronousEvent( event ).step.addAsynchronousOperation( result as IAsynchronousOperation );
@@ -143,25 +144,21 @@ package org.swizframework.metadata
 				event.stopImmediatePropagation();
 		}
 		
-		// ========================================
-		// protected methods
-		// ========================================
-		
 		/**
 		 * Validate Event
 		 *
-		 * Evalutes an Event to ensure it has all of the required properties specified in the [Mediate] tag, if applicable.
+		 * Evalutes an Event to ensure it has all of the required properties specified in the [EventHandler] tag, if applicable.
 		 *
 		 * @param event The Event to validate.
-		 * @param properties The required properties specified in the [Mediate] tag.
-		 * @returns A Boolean value indicating whether the event has all of the required properties specified in the [Mediate] tag.
+		 * @param properties The required properties specified in the [EventHandler] tag.
+		 * @returns A Boolean value indicating whether the event has all of the required properties specified in the [EventHandler] tag.
 		 */
 		protected function validateEvent( event:Event, properties:Array ):Boolean
 		{
 			for each( var property:String in properties )
 			{
 				if( ! ( property in event ) )
-					throw new Error(  "Unable to mediate event: " + property + " does not exist as a property of " + getQualifiedClassName( event ) + "." );
+					throw new Error(  "Unable to handle event: " + property + " does not exist as a property of " + getQualifiedClassName( event ) + "." );
 			}
 			
 			return true;
@@ -177,10 +174,12 @@ package org.swizframework.metadata
 		{
 			var args:Array = [];
 			
-			for each( var property:String in properties ) {
-				// Caution, the property may be a chain; e.g. "node.data.serialNumber"
-				
-				args[ args.length ] = PropertyUtils.getChainValue(event, property);
+			for each( var property:String in properties )
+			{
+				// Upstream patch to support property chains - ThomasB 
+				// NOTE: the property may actually be a "property chain"
+				//       e.g.   "node.data.serialNumber"
+				args[ args.length ] = PropertyUtils.getChainValue(event,property);
 			}
 			
 			return args;
@@ -189,7 +188,7 @@ package org.swizframework.metadata
 		/**
 		 * Get Parameter Count
 		 *
-		 * @returns The number of parameters for the mediated method.
+		 * @returns The number of parameters for the event handler method.
 		 */
 		protected function getParameterCount():int
 		{
@@ -199,7 +198,7 @@ package org.swizframework.metadata
 		/**
 		 * Get Required Parameter Count
 		 *
-		 * @returns The number of required parameters for the mediated method.
+		 * @returns The number of required parameters for the event handler method.
 		 */
 		protected function getRequiredParameterCount():int
 		{
@@ -220,7 +219,7 @@ package org.swizframework.metadata
 		/**
 		 * Get Parameter Type
 		 *
-		 * @param parameterIndex The index of parameter of the mediated method.
+		 * @param parameterIndex The index of parameter of the event handler method.
 		 * @returns The type for the specified parameter.
 		 */
 		protected function getParameterType( parameterIndex:int ):Class

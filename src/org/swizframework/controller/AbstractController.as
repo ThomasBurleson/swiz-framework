@@ -17,7 +17,7 @@
 package org.swizframework.controller
 {
 	import flash.events.IEventDispatcher;
-	import flash.net.URLRequest;
+	import flash.net.URLLoader;
 	import flash.system.LoaderContext;
 	
 	import mx.rpc.AsyncToken;
@@ -45,8 +45,6 @@ package org.swizframework.controller
 			_swiz = swiz;
 		}
 		
-		
-		
 		/** IDispatcherAware implementation */
 		public function set dispatcher( dispatcher:IEventDispatcher ):void
 		{
@@ -60,13 +58,15 @@ package org.swizframework.controller
 		
 		/** Delegates execute service call to Swiz */
 		protected function executeServiceCall( call:AsyncToken, resultHandler:Function,
-											   faultHandler:Function = null, handlerArgs:Array = null ):void
+											   faultHandler:Function = null, handlerArgs:Array = null ):AsyncToken
 		{
 			
 			if( faultHandler == null && _swiz.config.defaultFaultHandler != null )
 				faultHandler = _swiz.config.defaultFaultHandler;
 			
 			call.addResponder( new SwizResponder( resultHandler, faultHandler, handlerArgs ) );
+			
+			return call;
 		}
 		
 		/** Delegates execute url request call to Swiz */
@@ -74,14 +74,20 @@ package org.swizframework.controller
 											  progressHandler:Function = null, httpStatusHandler:Function = null,
 											  eventArgs:Array = null, useLoader:Boolean = false,
 											  context:LoaderContext = null, urlLoaderDataFormat:String = null,
-											  timeoutSeconds:uint=10, tries:uint=1 ):void
+											  timeoutSeconds:uint=10, tries:uint=1 ):URLLoader
 		{
 			
 			if( faultHandler == null && _swiz.config.defaultFaultHandler != null )
 				faultHandler = _swiz.config.defaultFaultHandler;
 			
-			var swizURLRequest:SwizURLRequest =
-				new SwizURLRequest( request, resultHandler, faultHandler, progressHandler, httpStatusHandler, eventArgs, useLoader, context, urlLoaderDataFormat, timeoutSeconds, tries );
+			var swizURLRequest:SwizURLRequest = new SwizURLRequest( request, 
+			                                                        resultHandler, faultHandler, 
+			                                                        progressHandler, httpStatusHandler, 
+			                                                        eventArgs, 
+			                                                        useLoader, context, urlLoaderDataFormat, 
+			                                                        timeoutSeconds, tries );
+
+			return request.loader as URLLoader;
 		}
 		
 		/** Delegates create command to Swiz */

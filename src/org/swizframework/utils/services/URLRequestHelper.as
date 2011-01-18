@@ -36,16 +36,20 @@ package org.swizframework.utils.services
 										   progressHandler:Function = null, httpStatusHandler:Function = null,
 										   eventArgs:Array = null, useLoader:Boolean = false,
 										   context:LoaderContext = null, urlLoaderDataFormat:String = null,
-										   timeoutSeconds:uint=10, tries:uint=1 ):URLRequest
+										   timeoutSeconds:uint=10, tries:uint=1 ):URLLoader
 		{
 			
 			// use default fault handler defined for swiz instance if not provided
 			if( faultHandler == null && _swiz.config.defaultFaultHandler != null )
 				faultHandler = _swiz.config.defaultFaultHandler;
 			
-			var dynamicURLRequest:SwizURLRequest = new SwizURLRequest( request, resultHandler, faultHandler, progressHandler, httpStatusHandler, eventArgs, useLoader, context, urlLoaderDataFormat, timeoutSeconds, tries );
-
-			return request;
+			var swizRequest : SwizURLRequest = new SwizURLRequest(  request, 
+			                                                        resultHandler, faultHandler, 
+			                                                        progressHandler, httpStatusHandler, 
+			                                                        eventArgs, 
+			                                                        useLoader, context, urlLoaderDataFormat, 
+			                                                        timeoutSeconds, tries );
+			return swizRequest.loader as URLLoader;
 		}
 	}
 }
