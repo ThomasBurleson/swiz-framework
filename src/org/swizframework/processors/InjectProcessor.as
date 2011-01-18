@@ -445,9 +445,7 @@ package org.swizframework.processors
 						}
 						
 					} else {
-						logger.warn( "InjectProcessor::canWatch() {0}.{1} is null.", path, property);							
-						results = false;
-						
+						logger.warn( "InjectProcessor::canWatch() {0}.{1} is null! Unable to determine if {2} is fully bindable!", path, property, injectTag.source);							
 						break;
 					}					
 				}

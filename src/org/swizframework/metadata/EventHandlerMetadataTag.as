@@ -147,10 +147,9 @@ package org.swizframework.metadata
 		/**
 		 * Constructor sets <code>defaultArgName</code>.
 		 */
-		public function EventHandlerMetadataTag(src:IMetadataTag=null)
+		public function EventHandlerMetadataTag()
 		{
 			defaultArgName = "event";
-			if (src != null) copyFrom(src);
 		}
 		
 		// ========================================

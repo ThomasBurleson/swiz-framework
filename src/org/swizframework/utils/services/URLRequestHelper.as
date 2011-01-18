@@ -16,6 +16,7 @@
 
 package org.swizframework.utils.services
 {
+	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.system.LoaderContext;
 	
