@@ -18,6 +18,7 @@ package org.swizframework.controller
 {
 	import flash.events.IEventDispatcher;
 	import flash.net.URLLoader;
+	import flash.net.URLRequest;
 	import flash.system.LoaderContext;
 	
 	import mx.rpc.AsyncToken;
@@ -87,7 +88,7 @@ package org.swizframework.controller
 			                                                        useLoader, context, urlLoaderDataFormat, 
 			                                                        timeoutSeconds, tries );
 
-			return request.loader as URLLoader;
+			return swizURLRequest.loader as URLLoader;
 		}
 		
 		/** Delegates create command to Swiz */
