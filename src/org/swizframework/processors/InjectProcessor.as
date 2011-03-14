@@ -446,6 +446,8 @@ package org.swizframework.processors
 						
 					} else {
 						logger.warn( "InjectProcessor::canWatch() {0}.{1} is null! Unable to determine if {2} is fully bindable!", path, property, injectTag.source);							
+						// DO NOT report error here... allow the addPropertyBinding() to configure databindings for propertyChains where parts of the chain
+						// are "null" during setUpMetadataTag()
 						break;
 					}					
 				}
