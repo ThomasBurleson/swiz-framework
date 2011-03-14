@@ -1,10 +1,15 @@
 This forked repository contains [customized extensions](http://wiki.github.com/ThomasBurleson/swiz-framework/) to the Swiz framework; Swiz is a brutally simple micro-architecture for creating Rich Internet Applications with ActionScript 3 and Adobe Flex.
 
-### Changes
+### Differences from the original "upstream" framework:
+
+Default support for bind == true (the upstream setting is FALSE which is a huge source of confusion)
+
+- [Inject(source="sessionModel.endPoint",bind="true")]
+- public var endPoint : String = "";
 
 Support for property chains in custom process tags.
 
-- [Mediate(event="VisualizationEvent.NODE_SELECTED", properties="node.data.serialNumber, autoFit"] 
+- [EventHandler(event="VisualizationEvent.NODE_SELECTED", properties="node.data.serialNumber, autoFit"] 
 - [Inject(source="networkModel.currentTopology.manuallyPlacedNodes", bind="true")]
 
 See [Wiki docs](http://github.com/ThomasBurleson/swiz-framework/wiki/MetadataProcessor-Enhancements) for details.
