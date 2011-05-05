@@ -22,6 +22,14 @@ See [Wiki docs](http://github.com/ThomasBurleson/swiz-framework/wiki/MetadataPro
 - 9/25/2010: Merged from Swiz GitHub mainline v1.0RC... into this fork on 9/25/2010
 
 
+## How to Contribute
+
+The Swiz team welcomes contributions to the framework in the form of pull requests. Please note that active development happens in the develop branch, so you should fork from and submit to it, not master.
+
+## Documentation and Reporting Bugs
+
+Swiz does not use GitHub for issue tracking or documentation. Documentation can be found in the [Swiz wiki](http://wiki.swizframework.org/) and bugs and feature requests should be entered in the [Swiz JIRA instance](http://bugs.swizframework.org/)
+
 ## Building
 
 You can compile the library .swc file using:
