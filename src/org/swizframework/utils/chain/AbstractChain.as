@@ -131,7 +131,7 @@ package org.swizframework.utils.chain
 		/**
 		 *
 		 */
-		public function start():void
+		public function start():IChain
 		{
 			if( _isComplete )
 			{
@@ -140,6 +140,8 @@ package org.swizframework.utils.chain
 				position = -1;
 				proceed();
 			}
+			
+			return this as IChain;
 		}
 		
 		public function stepComplete():void

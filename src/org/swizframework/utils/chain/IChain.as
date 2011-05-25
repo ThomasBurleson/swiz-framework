@@ -40,7 +40,7 @@ package org.swizframework.utils.chain
 		
 		function addStep( step:IChainStep ):IChain;
 		
-		function start():void;
+		function start():IChain;
 		function doProceed():void;
 	}
 }

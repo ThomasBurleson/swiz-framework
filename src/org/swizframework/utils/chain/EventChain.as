@@ -16,6 +16,7 @@
 
 package org.swizframework.utils.chain
 {
+	import flash.events.Event;
 	import flash.events.IEventDispatcher;
 	
 	public class EventChain extends BaseCompositeChain
@@ -82,6 +83,33 @@ package org.swizframework.utils.chain
 				EventChainStep( currentStep ).dispatcher ||= dispatcher;
 			
 			super.doProceed();
+		}
+		
+		// ========================================
+		// Static Builder Method
+		// ========================================
+		
+		/**
+		 * Utility method to construct an eventChain and auto-add the specified events; added to the chain in
+		 * the order listed in the events[].
+		 * 
+		 * <p>The IChain instance has not been "started".</p>
+		 *  
+		 * @param events Array of Event instances
+		 * @param dispatcher IEventDispatcher, typically this is the Swiz dispatcher
+		 * @param mode String SEQUENCE or PARALLEL
+		 * @param stopOnError 
+		 * @return IChain
+		 */
+		static public function createEventChain(events:Array, dispatcher:IEventDispatcher, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IChain {
+			var chain : IChain = new EventChain(dispatcher,mode,stopOnError);
+				
+				for each (var it:Event in events) {
+					if (it == null) continue;
+					chain.addStep( new EventChainStep( it ) );
+				}
+			
+			return chain;
 		}
 	}
 }
