@@ -19,6 +19,9 @@ package org.swizframework.utils.chain
 	import flash.events.Event;
 	import flash.events.IEventDispatcher;
 	
+	import org.swizframework.utils.async.AsynchronousChainOperation;
+	import org.swizframework.utils.async.IAsynchronousOperation;
+	
 	public class EventChain extends BaseCompositeChain
 	{
 		// ========================================
@@ -70,7 +73,7 @@ package org.swizframework.utils.chain
 		 */
 		public function addEvent( event:EventChainStep ):EventChain
 		{
-			addStep( event );
+			if (event != null) addStep( event );
 			return this;
 		}
 		
@@ -101,7 +104,7 @@ package org.swizframework.utils.chain
 		 * @param stopOnError 
 		 * @return IChain
 		 */
-		static public function createEventChain(events:Array, dispatcher:IEventDispatcher, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IChain {
+		static public function createChain(events:Array, dispatcher:IEventDispatcher, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IChain {
 			var chain : IChain = new EventChain(dispatcher,mode,stopOnError);
 				
 				for each (var it:Event in events) {
@@ -111,5 +114,22 @@ package org.swizframework.utils.chain
 			
 			return chain;
 		}
+		
+		/**
+		 * Utility method to construct an eventChain, start it, and wrap it in an AsynchronousChainOperation.
+		 * 
+		 * <p>The IChain instance has not been "started".</p>
+		 *  
+		 * @param events Array of Event instances
+		 * @param dispatcher IEventDispatcher, typically this is the Swiz dispatcher
+		 * @param mode String SEQUENCE or PARALLEL
+		 * @param stopOnError 
+		 * @return IAsynchronousOperation
+		 */
+		static public function createAsyncOperation(events:Array, dispatcher:IEventDispatcher, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IAsynchronousOperation {
+			var chain : IChain = EventChain.createChain(events, dispatcher, mode, stopOnError);
+			
+			return new AsynchronousChainOperation( chain.start() );
+		}		
 	}
 }
