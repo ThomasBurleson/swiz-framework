@@ -16,6 +16,9 @@
 
 package org.swizframework.utils.chain
 {
+	import org.swizframework.utils.async.AsynchronousChainOperation;
+	import org.swizframework.utils.async.IAsynchronousOperation;
+
 	public class CommandChain extends BaseCompositeChain
 	{
 		// ========================================
@@ -53,5 +56,51 @@ package org.swizframework.utils.chain
 			else
 				super.doProceed();
 		}
+		
+		// ========================================
+		// Static Builder Method
+		// ========================================
+		
+		/**
+		 * Utility method to construct an CommandChain and auto-add the specified functions or commands; added to the chain in
+		 * the order listed in the commands[] or functions[].
+		 * 
+		 * <p>The IChain instance has not been "started".</p>
+		 *  
+		 * @param events Array of Command instances or Function references (may be mixed)
+		 * @param mode String SEQUENCE or PARALLEL
+		 * @param stopOnError 
+		 * @return IChain
+		 */
+		static public function createChain(sequence:Array, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IChain {
+			var chain : IChain = new CommandChain(mode,stopOnError);
+			
+			for each (var step:* in sequence) {
+				
+				step= (step is Function) 	? new AsyncCommandChainStep( step as Function ) :
+					  (step is IChainStep)	? step											: null;
+				
+				if (step != null) 
+					chain.addStep( step );
+			}
+			
+			return chain;
+		}
+		
+		/**
+		 * Utility method to construct a CommandChain, start it, and wrap it in an AsynchronousChainOperation.
+		 * 
+		 * <p>The IChain instance has not been "started".</p>
+		 *  
+		 * @param events Array of Command instances or Function references (may be mixed)
+		 * @param mode String SEQUENCE or PARALLEL
+		 * @param stopOnError 
+		 * @return IAsynchronousOperation
+		 */
+		static public function createAsyncOperation(sequence:Array, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IAsynchronousOperation {
+			var chain : IChain = CommandChain.createChain(sequence, mode, stopOnError);
+			
+			return new AsynchronousChainOperation( chain.start() );
+		}		
 	}
 }
