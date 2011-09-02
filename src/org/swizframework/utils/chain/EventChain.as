@@ -107,9 +107,18 @@ package org.swizframework.utils.chain
 		static public function createChain(events:Array, dispatcher:IEventDispatcher, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IChain {
 			var chain : IChain = new EventChain(dispatcher,mode,stopOnError);
 				
-				for each (var it:Event in events) {
-					if (it == null) continue;
-					chain.addStep( new EventChainStep( it ) );
+				for each (var it:* in events) {
+										
+					if ( it is IChainStep) {
+						
+						// Simply add the chainStep instance
+						chain.addStep ( IChainStep(it) );
+						
+					} else if (it is Event)  {
+						
+						// Wrap the event so it can be used in a chain
+						chain.addStep(  new EventChainStep( it as Event ) );
+					}
 				}
 			
 			return chain;
