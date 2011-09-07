@@ -16,7 +16,7 @@ package org.swizframework.utils
 			var source : Object = getDestinationObject(target,chain);
 			var key    : String = getDestinationKey(chain);
 			
-			return source.hasOwnProperty(key) ? source[key] : null;
+			return source && source.hasOwnProperty(key) ? source[key] : null;
 		}
 		
 		/**

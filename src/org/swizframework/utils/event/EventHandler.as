@@ -157,8 +157,9 @@ package org.swizframework.utils.event
 		{
 			for each( var property:String in properties )
 			{
-				if( ! ( property in event ) )
-					throw new Error(  "Unable to handle event: " + property + " does not exist as a property of " + getQualifiedClassName( event ) + "." );
+				PropertyUtils.getDestinationObject(event,property);
+				/*if( ! ( property in event ) )
+					throw new Error(  "Unable to handle event: " + property + " does not exist as a property of " + getQualifiedClassName( event ) + "." );*/
 			}
 			
 			return true;
