@@ -12,7 +12,5 @@
 	<component id="SwizConfig" 				class="org.swizframework.core.SwizConfig" />
 	<component id="SwizTraceTarget" 		class="org.swizframework.utils.logging.SwizTraceTarget" />
 	<component id="URLRequestHelper" 		class="org.swizframework.utils.services.URLRequestHelper" />
-
-	<component id="SwizLogger"			class="org.swizframework.utils.logging.SwizLogger" />
 	
 </componentPackage>

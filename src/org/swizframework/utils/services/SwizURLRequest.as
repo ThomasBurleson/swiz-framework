@@ -30,11 +30,9 @@ package org.swizframework.utils.services
 	import flash.system.LoaderContext;
 	import flash.utils.Timer;
 	
-	[ExcludeClass]
-	
 	/**
 	 *
-	 * DynamicUrlRequest can be used to wrap URLLoader calles.
+	 * SwizURLRequest can be used to wrap URLLoader calles.
 	 * The faultHandler function will be used for IOErrors and SecurityErrors
 	 * so you should type the argument Event and check/cast the specific type
 	 * in the method body.
