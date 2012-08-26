@@ -88,57 +88,5 @@ package org.swizframework.utils.chain
 			super.doProceed();
 		}
 		
-		// ========================================
-		// Static Builder Method
-		// ========================================
-		
-		/**
-		 * Utility method to construct an eventChain and auto-add the specified events; added to the chain in
-		 * the order listed in the events[].
-		 * 
-		 * <p>The IChain instance has not been "started".</p>
-		 *  
-		 * @param events Array of Event instances
-		 * @param dispatcher IEventDispatcher, typically this is the Swiz dispatcher
-		 * @param mode String SEQUENCE or PARALLEL
-		 * @param stopOnError 
-		 * @return IChain
-		 */
-		static public function createChain(events:Array, dispatcher:IEventDispatcher, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IChain {
-			var chain : IChain = new EventChain(dispatcher,mode,stopOnError);
-				
-				for each (var it:* in events) {
-										
-					if ( it is IChainStep) {
-						
-						// Simply add the chainStep instance
-						chain.addStep ( IChainStep(it) );
-						
-					} else if (it is Event)  {
-						
-						// Wrap the event so it can be used in a chain
-						chain.addStep(  new EventChainStep( it as Event ) );
-					}
-				}
-			
-			return chain;
-		}
-		
-		/**
-		 * Utility method to construct an eventChain, start it, and wrap it in an AsynchronousChainOperation.
-		 * 
-		 * <p>The IChain instance has not been "started".</p>
-		 *  
-		 * @param events Array of Event instances
-		 * @param dispatcher IEventDispatcher, typically this is the Swiz dispatcher
-		 * @param mode String SEQUENCE or PARALLEL
-		 * @param stopOnError 
-		 * @return IAsynchronousOperation
-		 */
-		static public function createAsyncOperation(events:Array, dispatcher:IEventDispatcher, mode:String = ChainType.SEQUENCE, stopOnError:Boolean = true):IAsynchronousOperation {
-			var chain : IChain = EventChain.createChain(events, dispatcher, mode, stopOnError);
-			
-			return new AsynchronousChainOperation( chain.start() );
-		}		
 	}
 }

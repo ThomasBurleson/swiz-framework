@@ -13,4 +13,6 @@
 	<component id="SwizTraceTarget" 		class="org.swizframework.utils.logging.SwizTraceTarget" />
 	<component id="URLRequestHelper" 		class="org.swizframework.utils.services.URLRequestHelper" />
 	
+	<component id="AutowiredTestCase" 		class="org.swizframework.utils.test.AutowiredTestCase" />
+	
 </componentPackage>
