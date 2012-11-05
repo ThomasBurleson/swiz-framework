@@ -31,52 +31,37 @@ package org.swizframework.utils.test
 	 */
 	public class AutowiredTestCase extends EventDispatcher
 	{
-		/**
-		 * Backing variable for <code>beanProvider</code> getter/setter.
-		 */
-		private var _beanProviders:Array;
-		
-		/**
-		 * Backing variable for <code>swizConfig</code> getter/setter.
-		 */
-		private var _swizConfig:SwizConfig;
-		
-		/**
-		 * Backing variable for <code>swiz</code> getter/setter.
-		 */
-		private var _swiz:Swiz;
-		
 		public function AutowiredTestCase(target:IEventDispatcher=null)
 		{
 			super(target);
 		}
 		
 		/**
-		 * Setter for beanProvider property.
-		 */
-		public function set beanProviders(beanProviders:Array):void
-		{
-			_beanProviders = beanProviders;
-		}
-		
-		
-		/**
-		 * Getter for beanProvider property.
+		 * beanProvider property.
 		 */
 		public function get beanProviders():Array
 		{
 			return _beanProviders;
 		}
-		
-		/**
-		 * Setter for swizConfig property.
-		 */
-		public function set swizConfig(swizConfig:SwizConfig):void
+		public function set beanProviders(beanProviders:Array):void
 		{
-			_swizConfig = swizConfig;
+			_beanProviders = beanProviders;
 		}
-		
-		
+
+
+        /**
+         * beanProvider property.
+         */
+        public function get customProcessors():Array
+        {
+            return _customProcessors;
+        }
+        public function set customProcessors(processors:Array):void
+        {
+            _customProcessors = processors;
+        }
+
+
 		/**
 		 * Getter for swizConfig property.
 		 */
@@ -84,7 +69,11 @@ package org.swizframework.utils.test
 		{
 			return _swizConfig;
 		}
-		
+		public function set swizConfig(swizConfig:SwizConfig):void
+		{
+			_swizConfig = swizConfig;
+		}
+
 		/**
 		 * Getter for local Swiz instance.
 		 */
@@ -100,24 +89,41 @@ package org.swizframework.utils.test
 		[Before]
 		public function constructSwizContext():void
 		{
-			
-			trace("constructSwizContext() called");
-			
 			// initialize bean factory with configurec bean provider
 			if( _swiz == null && _beanProviders != null )
 			{
-				_swiz = new Swiz(null, _swizConfig, null, _beanProviders);
+				_swiz = new Swiz(null, _swizConfig, null, _beanProviders, _customProcessors);
 				_swiz.init();
-				
+
+				// autowire test case with bean factory
 				// wrap the unit test in a Bean definition
 				var bean:Bean = new Bean();
-				bean.source = this;
-				bean.typeDescriptor = TypeCache.getTypeDescriptor( bean.type, _swiz.domain );
-				
-				// autowire test case with bean factory
+                    bean.source = this;
+                    bean.typeDescriptor = TypeCache.getTypeDescriptor( bean.type, _swiz.domain );
+
 				_swiz.beanFactory.setUpBean( bean );
 			}
 		}
 	
+        /**
+         * Backing variable for <code>beanProvider</code> getter/setter.
+         */
+        private var _beanProviders:Array;
+
+        /**
+         * Backing variable for <code>swizConfig</code> getter/setter.
+         */
+        private var _swizConfig:SwizConfig;
+
+        /**
+         * Backing variable for <code>swiz</code> getter/setter.
+         */
+        private var _swiz:Swiz;
+
+        /**
+         * Backing variable for <code>customProcessors</code> getter/setter
+         */
+      	private var _customProcessors : Array;
+
 	}
 }
